@@ -83,6 +83,12 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 	for _, sprzedaz := range j.sprzedaz {
 		fmt.Fprintf(xml, " <tns:SprzedazWiersz>\n")
 		fmt.Fprintf(xml, "  <tns:LPSprzedazy>%s</tns:LPSprzedazy>\n", sprzedaz.lpSprzedazy)
+		fmt.Fprintf(xml, "  <tns:NrKontrahenta>%s</tns:NrKontrahenta>\n", sprzedaz.nrKontrahenta)
+		fmt.Fprintf(xml, "  <tns:NazwaKontrahenta>%s</tns:NazwaKontrahenta>\n", sprzedaz.nazwaKontrahenta)
+		fmt.Fprintf(xml, "  <tns:DowodSprzedazy>%s</tns:DowodSprzedazy>\n", sprzedaz.dowodSprzedazy)
+		fmt.Fprintf(xml, "  <tns:DataWystawienia>%s</tns:DataWystawienia>\n", sprzedaz.dataWystawienia)
+		fmt.Fprintf(xml, "  <tns:DataSprzedazy>%s</tns:DataSprzedazy>\n", sprzedaz.dataSprzedazy)
+		fmt.Fprintf(xml, "  <tns:TypDokumentu>%s</tns:TypDokumentu>\n", sprzedaz.typDokumentu)
 		fmt.Fprintf(xml, " </tns:SprzedazWiersz>\n")
 	}
 	fmt.Fprintf(xml, "</tns:JPK>")

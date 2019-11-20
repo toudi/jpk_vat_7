@@ -42,7 +42,13 @@ type Podmiot struct {
 }
 
 type Sprzedaz struct {
-	lpSprzedazy string
+	lpSprzedazy      string
+	nrKontrahenta    string
+	nazwaKontrahenta string
+	dowodSprzedazy   string
+	dataWystawienia  string
+	dataSprzedazy    string
+	typDokumentu     string
 }
 
 type JPK struct {

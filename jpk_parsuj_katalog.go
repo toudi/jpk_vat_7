@@ -82,6 +82,12 @@ func (j *JPK) parsujKatalog(fileName string) error {
 
 				return []Pole{
 					Pole{naglowek: "sprzedaz.lp", p: &j.sprzedaz[len-1].lpSprzedazy},
+					Pole{naglowek: "sprzedaz.numer", p: &j.sprzedaz[len-1].nrKontrahenta},
+					Pole{naglowek: "sprzedaz.nazwa", p: &j.sprzedaz[len-1].nazwaKontrahenta},
+					Pole{naglowek: "sprzedaz.dowod", p: &j.sprzedaz[len-1].dowodSprzedazy},
+					Pole{naglowek: "sprzedaz.dataWystawienia", p: &j.sprzedaz[len-1].dataWystawienia},
+					Pole{naglowek: "sprzedaz.dataSprzedazy", p: &j.sprzedaz[len-1].dataSprzedazy},
+					Pole{naglowek: "sprzedaz.typDokumentu", p: &j.sprzedaz[len-1].typDokumentu},
 				}
 			},
 		},
