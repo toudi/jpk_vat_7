@@ -93,11 +93,6 @@ func (p *Parser) parsuj() error {
 				pola = sekcja.pola
 				atrybuty = sekcja.atrybuty
 
-				if sekcja.pobierzPola != nil {
-					log.Debugf("Sekcja jest typu tablicowego.")
-					// pola, atrybuty = sekcja.pobierzPola()
-				}
-
 				if pola == nil {
 					log.Debugf("pusta mapa, tworze nową")
 					pola = make(map[string]string)

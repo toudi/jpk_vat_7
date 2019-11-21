@@ -3,22 +3,15 @@ package main
 // ten moduł zawiera informacje o sekcjach JPK. Sekcje pobierają informacje
 // o kolumnach na podstawie konfiguracji w pliku toml.
 
-type Pole struct {
-	nrKol    int
-	naglowek string
-	// wskaźnik na miejsce gdzie zapisać sparsowaną wartość
-	p *string
-}
-
 type Sekcja struct {
 	// kolumna która oznacza start sekcji
-	start       string
-	nazwa       string
-	pobierzPola func() (map[string]string, map[string]string)
-	// pola        []Pole
+	start string
+	// nazwa sekcji (tylko do logów)
+	nazwa    string
 	pola     map[string]string
 	atrybuty map[string]string
-	finish   func(Sekcja)
+	// funkcja która zostanie wywołana po zakończeniu parsowania sekcji
+	finish func(Sekcja)
 }
 
 var sekcjaNaglowek Sekcja
