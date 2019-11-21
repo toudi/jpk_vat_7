@@ -26,8 +26,10 @@ kolumna.atrybut
 
 na przykład:
 
+```
 KodFormularza;KodFormularza.kodSystemowy
 ABC;DEF
+```
 
 co spowoduje wygenerowanie struktury w postaci:
 
