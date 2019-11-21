@@ -11,21 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Pole struct {
-	nrKol    int
-	naglowek string
-	// wskaźnik na miejsce gdzie zapisać sparsowaną wartość
-	p *string
-}
-
-type Sekcja struct {
-	start       int
-	nazwa       string
-	pobierzPola func() []Pole
-	pola        []Pole
-	slownik     map[string]string
-}
-
 // typ definiuje parser struktury zapisanej w CSV.
 type Parser struct {
 	// potrzebne do inicjalizacji
@@ -35,6 +20,17 @@ type Parser struct {
 	naglowki []string
 	// sekcje definiują nam co będziemy parsować.
 	sekcje []Sekcja
+}
+
+func parser(filePath string, sekcje []Sekcja) error {
+	var err error
+	p, err := parserInit(filePath)
+	if err != nil {
+		return err
+	}
+	defer p.Close()
+	p.sekcje = sekcje
+	return p.parsuj()
 }
 
 func parserInit(filePath string) (*Parser, error) {
@@ -53,8 +49,10 @@ func parserInit(filePath string) (*Parser, error) {
 
 func (p *Parser) parsuj() error {
 	var nrLinii int = -1
-	var nrKolNaglowka int
-	var pola []Pole
+	// var nrKolNaglowka int
+	var naglowek string
+	var pola map[string]string
+	var atrybuty map[string]string
 
 	for {
 		line, err := p.csvReader.Read()
@@ -70,50 +68,62 @@ func (p *Parser) parsuj() error {
 		} else {
 			// iterujemy po sekcjach i staramy sie parsować elementy.
 			for _, sekcja := range p.sekcje {
-				log.Debugf("Próba parsowania sekcji %s (od kolumny %d)", sekcja.nazwa, sekcja.start)
-				if line[sekcja.start] != "" {
-					// znaleźliśmy sekcję. zaczynamy parsowanie.
-					log.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
-					pola = sekcja.pola
-
-					if sekcja.pobierzPola != nil {
-						log.Debugf("Sekcja jest typu tablicowego.")
-						pola = sekcja.pobierzPola()
+				// należy odnaleźć kolumnę ze startem sekcji.
+				startSekcji := -1
+				for i, naglowek := range p.naglowki {
+					if naglowek == sekcja.start {
+						startSekcji = i
+						break
 					}
-					//else {
-					for kol, pole := range pola {
-						nrKolNaglowka = sekcja.start + kol
-						if pole.nrKol > 0 {
-							nrKolNaglowka = pole.nrKol
-						}
-						if strings.ToUpper(p.naglowki[nrKolNaglowka]) != strings.ToUpper(pole.naglowek) {
-							return fmt.Errorf("Nieprawidłowy nagłowek w linii %d; kolumna %d: %s (Oczekiwano %s)", nrLinii, nrKolNaglowka, p.naglowki[nrKolNaglowka], pole.naglowek)
-						}
-						if *pole.p != line[nrKolNaglowka] {
-							*pole.p = line[nrKolNaglowka]
-							log.Debugf("%s=%s", p.naglowki[nrKolNaglowka], *pole.p)
-						}
-					}
-					// koniec parsowania pól na podstawie mapowania.
-					// spróbujemy sparsować pola dynamiczne
-					if len(p.naglowki) > nrKolNaglowka {
-						log.Debugf("Pozostały pola do sparsowania. Wczytywanie ich do słownika.")
-						if len(line) < len(p.naglowki) {
-							return fmt.Errorf("Linia %d nie ma wymaganej ilości kolumn (%d)", nrLinii, len(p.naglowki))
-						}
-						nrKolNaglowka++
-						for i := nrKolNaglowka; i < len(p.naglowki); i++ {
-							if line[i] != "" {
-								sekcja.slownik[p.naglowki[i]] = line[i]
-								log.Debugf("%s => %s", p.naglowki[i], line[i])
-							} else {
-								log.Debugf("Pomijanie kolumny %d - jest pusta", i)
-							}
-						}
-					}
-					//}
 				}
+
+				if startSekcji == -1 {
+					log.Debugf("Nie znaleziono sekcji %s", sekcja.nazwa)
+					continue
+				}
+
+				log.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
+				if line[startSekcji] == "" {
+					// pusta sekcja, lecimy dalej.
+					continue
+				}
+
+				// znaleźliśmy sekcję. zaczynamy parsowanie.
+				log.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
+				pola = sekcja.pola
+				atrybuty = sekcja.atrybuty
+
+				if sekcja.pobierzPola != nil {
+					log.Debugf("Sekcja jest typu tablicowego.")
+					// pola, atrybuty = sekcja.pobierzPola()
+				}
+
+				if pola == nil {
+					log.Debugf("pusta mapa, tworze nową")
+					pola = make(map[string]string)
+					atrybuty = make(map[string]string)
+				}
+
+				for kol := startSekcji; kol < len(p.naglowki); kol++ {
+					naglowek = p.naglowki[kol]
+					if line[kol] != "" {
+						log.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
+						if strings.Contains(naglowek, ".") {
+							// to jest atrybut.
+							atrybuty[naglowek] = line[kol]
+						} else {
+							pola[naglowek] = line[kol]
+						}
+					} else {
+						log.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
+					}
+				}
+
+				sekcja.pola = pola
+				sekcja.atrybuty = atrybuty
+
 				log.Debugf("===> KONIEC SEKCJI <=== ")
+				sekcja.finish(sekcja)
 			}
 		}
 	}
@@ -125,36 +135,13 @@ func (p *Parser) Close() {
 }
 
 func (j *JPK) parsujCSV(fileName string) error {
-	parser, err := parserInit(fileName)
-	if parser == nil {
-		return fmt.Errorf("Błąd tworzenia instancji parsera: %v", err)
-	}
-	// tworzymy sekcje.
-	sekcjaNaglowek := Sekcja{
-		nazwa: "nagłówek",
-		start: 0,
-		pola: []Pole{
-			Pole{naglowek: "kodFormularza", p: &j.naglowek.kodFormularza},
-			Pole{naglowek: "kodSystemowy", p: &j.naglowek.kodSystemowy},
-			Pole{naglowek: "wersjaSchemy", p: &j.naglowek.wersjaSchemy},
-			Pole{naglowek: "wariantFormularza", p: &j.naglowek.wariantFormularza},
-			Pole{naglowek: "kodUrzedu", p: &j.naglowek.kodUrzedu, nrKol: 69},
-		},
-	}
-	sekcjaDeklaracja := Sekcja{
-		nazwa: "deklaracja VAT-7",
-		start: 70,
-		pola: []Pole{
-			Pole{naglowek: "dekl.kodFormularza", p: &j.deklaracja.kod},
-			Pole{naglowek: "dekl.kodSystemowy", p: &j.deklaracja.kodSystemowy},
-			Pole{naglowek: "dekl.kodPodatku", p: &j.deklaracja.kodPodatku},
-			Pole{naglowek: "dekl.rodzajZobowiazania", p: &j.deklaracja.rodzajZobowiazania},
-			Pole{naglowek: "dekl.wersjaSchemy", p: &j.deklaracja.wersjaSchemy},
-			Pole{naglowek: "dekl.wariant", p: &j.deklaracja.wariantFormularza},
-		},
-	}
-
-	parser.sekcje = []Sekcja{sekcjaNaglowek, sekcjaDeklaracja}
-	defer parser.Close()
-	return parser.parsuj()
+	return parser(fileName, []Sekcja{
+		sekcjaNaglowek,
+		sekcjaPodmiot,
+		sekcjaDeklaracja,
+		sekcjaSprzedaz,
+		sekcjaSprzedazCtrl,
+		sekcjaZakup,
+		sekcjaZakupCtrl,
+	})
 }

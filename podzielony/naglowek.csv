@@ -1,2 +1,2 @@
-kodFormularza;kodSystemowy;wersjaSchemy;wariantFormularza;rok;miesiac;kodUrzedu
-JPK_VAT;JPK_V7M (1);1-0;1;2019;11;3026
+KodFormularza;NazwaSystemu;KodFormularza.kodSystemowy;KodFormularza.wersjaSchemy;WariantFormularza;Rok;Miesiac;KodUrzedu;CelZlozenia;KodFormularzaDekl;KodFormularzaDekl.kodPodatku;KodFormularzaDekl.rodzajZobowiazania;KodFormularzaDekl.wersjaSchemy
+JPK_VAT;WSI PEGASUS;JPK_V7M (1);1-0;1;2019;11;3026;1;VAT-7;VAT;Z;1-0E

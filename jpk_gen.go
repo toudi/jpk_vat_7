@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/viper"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,35 +27,14 @@ func main() {
 		os.Exit(-1)
 	}
 
+	viper.SetConfigFile("config.toml")
+	viper.ReadInConfig()
+
 	jpk := &JPK{
 		dataWytworzenia: time.Now(),
-		naglowek: Naglowek{
-			kodSystemowy:       "JPK_V7M (1)",
-			wersjaSchemy:       "1-0",
-			kodFormularza:      "JPK_VAT",
-			wariantFormularza:  "1",
-			nazwaSystemu:       "WSI PEGASUS",
-			celZlozenia:        "1",
-			celZlozeniaPozycja: "P_7",
-			kodUrzedu:          "",
-			rok:                "0",
-			miesiac:            "0",
-		},
-
-		deklaracja: formularzVAT7{
-			kod:                "VAT-7",
-			kodSystemowy:       "VAT-7 (21)",
-			kodPodatku:         "VAT",
-			rodzajZobowiazania: "Z",
-			wersjaSchemy:       "1-0E",
-			wariantFormularza:  "21",
-			pozycjeSzczegolowe: make(map[string]string),
-		},
-
-		podmiot: Podmiot{
-			osobaFizyczna: true,
-		},
 	}
+
+	jpk.inicjalizujSekcje()
 
 	fileName := flag.Args()[0]
 
