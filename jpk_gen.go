@@ -5,8 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/spf13/viper"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,9 +24,6 @@ func main() {
 		log.Errorf("Nieprawidłowe wywołanie programu. jpk_gen plik-lub-katalog\n")
 		os.Exit(-1)
 	}
-
-	viper.SetConfigFile("config.toml")
-	viper.ReadInConfig()
 
 	jpk := &JPK{
 		dataWytworzenia: time.Now(),
