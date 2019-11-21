@@ -4,6 +4,13 @@ Program do konwersji pliku / plików csv na plik JPK.
 
 Napisałem go, ponieważ ministerstwo finansów udostępniło nową specyfikację JPK, ale nie udostępniło wejściowych plików CSV które można wrzucić do ich konwertera.
 
+Ważna uwaga - dla zachowania kompatybilności z plikiem z ministerstwa używam średników
+a nie przecinków.
+
+Druga ważna uwaga - wypełniamy tylko te kolumny których potrzebujemy, dzięki temu
+nie ma potrzeby wrzucania dziesiątek pustych pól - większość pól w JPK i tak jest opcjonalna.
+
+
 Instrukcja obsługi
 ------------------
 Program może pracować w dwóch trybach: parsowania pojedyńczego pliku lub katalogu z 
@@ -24,31 +31,24 @@ ABC;DEF
 
 co spowoduje wygenerowanie struktury w postaci:
 
+```
 <tns:KodFormularza kodSystemowy="DEF">ABC</tns:KodFormularza>
-
-Kolejność kolumn ma znaczenie w tym sensie, że kiedy program znajdzie kolejną sekcję
-to kolumny dopisywane są do tej sekcji. puste  kolumny są ignorowane, co oznacza, że
-technicznie wykonalne jest stworzenie pliku będącego kompatybilnie wstecznym z tym od
-ministerstwa, np:
-
-KodFormularza; .... (kolumny); Rok
-JPK;;;; ( ;;;; ); 2019
-;;;;;1;0;0;;;;;
-
-itd.
-
-Jak jednak widać, takie podejście jest kiepsko skalowalne
+```
 
 Pojedynczy plik
-~~~~~~~~~~~~~~~
-Zachowałem ten tryb dla kompatybilności z plikiem dostarczonym przez ministerstwo,
-ale moim skromnym zdaniem używanie tej wersji mija się z celem. aby plik był kompatybilny
-wstecz, jakiekolwiek nowe kolumny muszą być dodawane na końcu co oznacza, że kolejne 
-wiersze muszą mieć gigantyczne ilości średników aby być sparsowane. Dodatkowo, nie
-wszystkie kolumny są obowiązkowe więc tym bardziej mamy dużą ilość średników
+---------------
+
+W wersji z pojedyńczym plikiem wszystki wiersze parsowane są z pojedyńczego wejściowego
+pliku CSV. Przykład (celowo daję tylko kilka kolumn):
+
+```
+KodFormularza;KodFormularza.kodSystemowy;Pouczenia
+JPK;JPK_V7M (1);
+;;1
+```
 
 Katalog
-~~~~~~~
+-------
 
 Przy wywołaniu programu z nazwą katalogu program będzie szukał następujących plików do
 parsowania:
@@ -62,23 +62,27 @@ zakup.csv (wiersze zakupu oraz wiersz kontrolny zakupu)
 Uwaga: kolumny KodFormularzaDekl oraz WariantFormularzaDekl nadpisywane są w sekcji nagłówka a nie w sekcji deklaracja.
 
 Opis sekcji:
-~~~~~~~~~~~~
-Nagłówek
+------------
+Nagłówek - mapowany na gałąź tns:Naglowek
 Kolumna startowa: KodFormularza
 
-Deklaracja
+Podmiot - mapowany na gałąź tns:Podmiot > tns:OsobaFizyczna lub tns:Podmiot > tns:OsobaNiefizyczna
+Kolumna startowa: typPodmiotu. Jeśli kolumna ma wartość "F" zostanie wygenerowana struktura tns:OsobaFizyczna; Jeśli kolumna ma wartość "NF" zostanie wygenerowana
+struktura tns:OsobaNiefizyczna
+
+Deklaracja - mapowany na gałąź tns:Deklaracja > tns:PozycjeSzczegolowe
 Kolumna startowa: Pouczenia
 
-Wiersze Sprzedaży
+Wiersze Sprzedaży - mapowane na gałęzie tns:SprzedazWiersz
 Kolumna startowa: LpSprzedazy
 
-Wiersz kontrolny sprzedaży
+Wiersz kontrolny sprzedaży - mapowany na gałąź tns:SprzedazCtrl
 Kolumna startowa: LiczbaWierszySprzedazy
 
-Wiersze kupna
+Wiersze kupna - mapowane na gałęzie tns:ZakupWiersz
 Kolumna startowa: LpZakupu
 
-Wiersz kontrolny zakupu
+Wiersz kontrolny zakupu - mapowany na gałąź tns:ZakupCtrl
 Kolumna startowa: LiczbaWierszyZakupow
 
 kompilacja:
