@@ -1,7 +1,7 @@
-LpSprzedazy;NrKontrahenta;LiczbaWierszySprzedazy;PodatekNalezny
-1;11;;
-2;22;;
-3;11;;
-4;22;;
-5;11;;
-;;4;100.24
+LpSprzedazy;NrKontrahenta;NazwaKontrahenta;DowodSprzedazy;DataWystawienia;DataSprzedazy;TypDokumentu;K_10;K_19;K_20;K_21;K_22;LiczbaWierszySprzedazy;PodatekNalezny
+1;11;KKK;;;;;;100;78;23;18;;
+2;22;LLL;;;;;;;;;;;
+3;33;MMM;;;;;;;;;;;
+4;44;NNN;;;;;;;;;;;
+5;55;OOO;;;;;;;;;;;
+;;;;;;;;;;;;4;231
