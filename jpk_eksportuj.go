@@ -48,7 +48,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 		fileName += ".jpk"
 	}
 
-	xml, err := os.OpenFile(fileName, os.O_WRONLY, 0644)
+	xml, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("Błąd tworzenia pliku wyjściowego: %v", err)
 	}
