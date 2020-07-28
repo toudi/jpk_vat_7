@@ -1,7 +1,5 @@
 package main
 
-import "time"
-
 type SekcjaJPK struct {
 	// kolejne pola, przekładane na tagi XML
 	// np. KodFormularza
@@ -28,7 +26,7 @@ type Kupno struct {
 }
 
 type JPK struct {
-	dataWytworzenia time.Time
+	// dataWytworzenia time.Time
 
 	//
 	naglowek   SekcjaJPK

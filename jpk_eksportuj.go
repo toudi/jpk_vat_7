@@ -34,7 +34,7 @@ func zapisSekcji(xml *os.File, sekcja SekcjaJPK, exclude []string) {
 		fmt.Fprintf(xml, "   <tns:%s", pole)
 		for atrybut, wartoscAtrybutu := range sekcja.atrybuty {
 			if strings.HasPrefix(atrybut, pole) {
-				fmt.Fprintf(xml, " %s=\"%s\"", strings.TrimLeft(atrybut, pole+"."), wartoscAtrybutu)
+				fmt.Fprintf(xml, " %s=\"%s\"", strings.ReplaceAll(atrybut, pole+".", ""), wartoscAtrybutu)
 			}
 		}
 		fmt.Fprintf(xml, ">%s</tns:%s>\n", wartosc, pole)
@@ -48,7 +48,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 		fileName += ".jpk"
 	}
 
-	xml, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0644)
+	xml, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("Błąd tworzenia pliku wyjściowego: %v", err)
 	}
@@ -60,7 +60,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 	fmt.Fprintf(xml, "<tns:JPK xmlns=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n xmlns:edt=\"%s\">\n", jpkXMLNS, tnsXMLNS, xsiXMLNS, etdXMLNS)
 
 	fmt.Fprintf(xml, " <tns:Naglowek>\n")
-	fmt.Fprintf(xml, "   <tns:DataWytworzeniaJPK>%s</tns:DataWytworzeniaJPK>\n", j.dataWytworzenia.Format("2006-01-02T15:04:05.99"))
+	// fmt.Fprintf(xml, "   <tns:DataWytworzeniaJPK>%s</tns:DataWytworzeniaJPK>\n", j.dataWytworzenia.Format("2006-01-02T15:04:05.99"))
 	zapisSekcji(xml, j.naglowek, nil)
 
 	// d := j.deklaracja

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -26,7 +25,7 @@ func main() {
 	}
 
 	jpk := &JPK{
-		dataWytworzenia: time.Now(),
+		// dataWytworzenia: time.Now(),
 	}
 
 	jpk.inicjalizujSekcje()
