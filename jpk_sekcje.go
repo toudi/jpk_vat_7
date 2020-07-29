@@ -6,6 +6,10 @@ package main
 type Sekcja struct {
 	// kolumna która oznacza start sekcji
 	start string
+	// numer kolumny która jest pierwszą w sekcji
+	kolumnaStart int
+	// numer kolumny która jest ostatnią w sekcji
+	kolumnaKoniec int
 	// nazwa sekcji (tylko do logów)
 	nazwa    string
 	pola     map[string]string
@@ -21,6 +25,8 @@ var sekcjaSprzedazCtrl Sekcja
 var sekcjaZakup Sekcja
 var sekcjaZakupCtrl Sekcja
 var sekcjaDeklaracja Sekcja
+var sekcjaDeklaracjaNaglowek Sekcja
+var sekcjaDeklaracjaPozycje Sekcja
 
 func (j *JPK) inicjalizujSekcje() {
 	sekcjaNaglowek = Sekcja{
@@ -46,6 +52,22 @@ func (j *JPK) inicjalizujSekcje() {
 		},
 	}
 
+	sekcjaDeklaracjaNaglowek = Sekcja{
+		nazwa: "nagłówek deklaracji VAT",
+		start: "KodFormularzaDekl",
+		finish: func(s Sekcja) {
+			j.deklaracjaNaglowek.pola = s.pola
+			j.deklaracjaNaglowek.atrybuty = s.atrybuty
+		},
+	}
+	sekcjaDeklaracjaPozycje = Sekcja{
+		nazwa: "pozycje szczegółowej deklaracji VAT",
+		start: "P_10",
+		finish: func(s Sekcja) {
+			j.deklaracjaPozycjeSzczegolowe.pola = s.pola
+			j.deklaracjaPozycjeSzczegolowe.atrybuty = s.atrybuty
+		},
+	}
 	sekcjaDeklaracja = Sekcja{
 		nazwa: "deklaracja",
 		start: "Pouczenia",

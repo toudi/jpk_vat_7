@@ -6,10 +6,9 @@ import (
 	"strings"
 )
 
-const jpkXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2018/08/24/eD/DefinicjeTypy/"
-const tnsXMLNS = "http://jpk.mf.gov.pl/wzor/2019/10/16/10167/"
+const tnsXMLNS = "http://crd.gov.pl/wzor/2020/05/08/9393/"
 const xsiXMLNS = "http://www.w3.org/2001/XMLSchema-instance"
-const etdXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2018/08/24/eD/DefinicjeTypy/"
+const etdXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2020/03/11/eD/DefinicjeTypy/"
 
 // kod powstal doslownie w jeden wieczor. nie mialem czasu na to aby
 // bawic sie w eleganckie wywolywanie funkcji xml.marshall
@@ -57,7 +56,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 
 	fmt.Fprintf(xml, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
 
-	fmt.Fprintf(xml, "<tns:JPK xmlns=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n xmlns:edt=\"%s\">\n", jpkXMLNS, tnsXMLNS, xsiXMLNS, etdXMLNS)
+	fmt.Fprintf(xml, "<tns:JPK xmlns:edt=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n", etdXMLNS, tnsXMLNS, xsiXMLNS)
 
 	fmt.Fprintf(xml, " <tns:Naglowek>\n")
 	// fmt.Fprintf(xml, "   <tns:DataWytworzeniaJPK>%s</tns:DataWytworzeniaJPK>\n", j.dataWytworzenia.Format("2006-01-02T15:04:05.99"))
@@ -82,12 +81,18 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 	fmt.Fprintf(xml, " </tns:Podmiot1>\n")
 	// sekcja deklaracja (VAT-7)
 	fmt.Fprintf(xml, " <tns:Deklaracja>\n")
+	zapisSekcji(xml, j.deklaracja, nil)
+
+	fmt.Fprintf(xml, "  <tns:Naglowek>\n")
+
+	zapisSekcji(xml, j.deklaracjaNaglowek, nil)
+
+	fmt.Fprintf(xml, "  </tns:Naglowek>\n")
 	fmt.Fprintf(xml, "  <tns:PozycjeSzczegolowe>\n")
 
-	zapisSekcji(xml, j.deklaracja, []string{"Pouczenia"})
+	zapisSekcji(xml, j.deklaracjaPozycjeSzczegolowe, nil)
 
 	fmt.Fprintf(xml, "  </tns:PozycjeSzczegolowe>\n")
-	fmt.Fprintf(xml, "  <tns:Pouczenia>%s</tns:Pouczenia>\n", j.deklaracja.pola["Pouczenia"])
 	fmt.Fprintf(xml, " </tns:Deklaracja>\n")
 
 	// pozycje sprzedaży

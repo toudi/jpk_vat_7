@@ -56,31 +56,38 @@ func (p *Parser) parsuj() error {
 
 	for {
 		line, err := p.csvReader.Read()
+		log.Debugf("Odczytano rekord: %+v. Ilość pól: %d\n", line, len(line))
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return fmt.Errorf("Błąd odczytu CSV: %v", err)
+			return fmt.Errorf("Błąd odczytu CSV: %v; odczytany rekord: %v o długości: %d", err, line, len(line))
 		}
 
 		nrLinii++
 		if nrLinii == 0 {
 			p.naglowki = line
+			kolumnaStart := 0
+			for i, sekcja := range p.sekcje {
+				log.Debugf("Sprawdzam sekcje: %s (od kolumny %s)\n", sekcja.nazwa, sekcja.start)
+				for nrKolumny := kolumnaStart; nrKolumny < len(line); nrKolumny++ {
+					log.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
+					if line[nrKolumny] == sekcja.start {
+						p.sekcje[i].kolumnaStart = nrKolumny
+						p.sekcje[i].kolumnaKoniec = len(line)
+						kolumnaStart = nrKolumny
+						if i > 0 {
+							p.sekcje[i-1].kolumnaKoniec = nrKolumny
+							log.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
+						}
+						break
+					}
+				}
+			}
 		} else {
 			// iterujemy po sekcjach i staramy sie parsować elementy.
 			for _, sekcja := range p.sekcje {
 				// należy odnaleźć kolumnę ze startem sekcji.
-				startSekcji := -1
-				for i, naglowek := range p.naglowki {
-					if naglowek == sekcja.start {
-						startSekcji = i
-						break
-					}
-				}
-
-				if startSekcji == -1 {
-					log.Debugf("Nie znaleziono sekcji %s", sekcja.nazwa)
-					continue
-				}
+				startSekcji := sekcja.kolumnaStart
 
 				log.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
 				if line[startSekcji] == "" {
@@ -100,6 +107,10 @@ func (p *Parser) parsuj() error {
 				}
 
 				for kol := startSekcji; kol < len(p.naglowki); kol++ {
+					if kol >= sekcja.kolumnaKoniec || p.naglowki[kol] == "stop" {
+						log.Debugf("koniec sekcji")
+						break
+					}
 					naglowek = p.naglowki[kol]
 					if line[kol] != "" {
 						log.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
@@ -107,7 +118,7 @@ func (p *Parser) parsuj() error {
 							// to jest atrybut.
 							atrybuty[naglowek] = line[kol]
 						} else {
-							pola[naglowek] = line[kol]
+							pola[naglowek] = strings.TrimRight(line[kol], " ")
 						}
 					} else {
 						log.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
@@ -132,11 +143,13 @@ func (p *Parser) Close() {
 func (j *JPK) parsujCSV(fileName string) error {
 	return parser(fileName, []Sekcja{
 		sekcjaNaglowek,
+		sekcjaDeklaracjaNaglowek,
 		sekcjaPodmiot,
-		sekcjaDeklaracja,
 		sekcjaSprzedaz,
 		sekcjaSprzedazCtrl,
 		sekcjaZakup,
 		sekcjaZakupCtrl,
+		sekcjaDeklaracjaPozycje,
+		sekcjaDeklaracja,
 	})
 }

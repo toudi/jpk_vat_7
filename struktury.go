@@ -29,8 +29,10 @@ type JPK struct {
 	// dataWytworzenia time.Time
 
 	//
-	naglowek   SekcjaJPK
-	deklaracja SekcjaJPK
+	naglowek                     SekcjaJPK
+	deklaracja                   SekcjaJPK
+	deklaracjaNaglowek           SekcjaJPK
+	deklaracjaPozycjeSzczegolowe SekcjaJPK
 	// deklaracja formularzVAT7
 	podmiot  Podmiot
 	sprzedaz Sprzedaz
