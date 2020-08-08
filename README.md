@@ -1,8 +1,10 @@
-jpk_gen
-=======
-Program do konwersji pliku / plików csv na plik JPK.
+jpk vat z deklaracją
+====================
+Program do konwersji pliku / plików csv na plik JPK oraz wysyłania go
+na serwer ministerstwa.
 
-Napisałem go, ponieważ ministerstwo finansów udostępniło nową specyfikację JPK, ale nie udostępniło wejściowych plików CSV które można wrzucić do ich konwertera.
+Napisałem go, ponieważ ministerstwo finansów udostępniło nową specyfikację JPK, ale nie udostępniło wejściowych plików CSV które można wrzucić do ich konwertera. Ponadto, oficjalny program ministerstwa nie wspiera nowej wersji
+schemy
 
 Ważna uwaga - dla zachowania kompatybilności z plikiem z ministerstwa używam średników
 a nie przecinków.

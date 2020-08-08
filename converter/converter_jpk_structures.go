@@ -1,4 +1,6 @@
-package main
+package converter
+
+import "time"
 
 type SekcjaJPK struct {
 	// kolejne pola, przekładane na tagi XML
@@ -26,7 +28,7 @@ type Kupno struct {
 }
 
 type JPK struct {
-	// dataWytworzenia time.Time
+	created time.Time
 
 	//
 	naglowek                     SekcjaJPK

@@ -1,4 +1,4 @@
-package main
+package converter
 
 import (
 	"bufio"
@@ -7,8 +7,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // typ definiuje parser struktury zapisanej w CSV.
@@ -56,7 +54,7 @@ func (p *Parser) parsuj() error {
 
 	for {
 		line, err := p.csvReader.Read()
-		log.Debugf("Odczytano rekord: %+v. Ilość pól: %d\n", line, len(line))
+		logger.Debugf("Odczytano rekord: %+v. Ilość pól: %d\n", line, len(line))
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -68,16 +66,16 @@ func (p *Parser) parsuj() error {
 			p.naglowki = line
 			kolumnaStart := 0
 			for i, sekcja := range p.sekcje {
-				log.Debugf("Sprawdzam sekcje: %s (od kolumny %s)\n", sekcja.nazwa, sekcja.start)
+				logger.Debugf("Sprawdzam sekcje: %s (od kolumny %s)\n", sekcja.nazwa, sekcja.start)
 				for nrKolumny := kolumnaStart; nrKolumny < len(line); nrKolumny++ {
-					log.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
+					logger.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
 					if line[nrKolumny] == sekcja.start {
 						p.sekcje[i].kolumnaStart = nrKolumny
 						p.sekcje[i].kolumnaKoniec = len(line)
 						kolumnaStart = nrKolumny
 						if i > 0 {
 							p.sekcje[i-1].kolumnaKoniec = nrKolumny
-							log.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
+							logger.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
 						}
 						break
 					}
@@ -89,31 +87,31 @@ func (p *Parser) parsuj() error {
 				// należy odnaleźć kolumnę ze startem sekcji.
 				startSekcji := sekcja.kolumnaStart
 
-				log.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
+				logger.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
 				if line[startSekcji] == "" {
 					// pusta sekcja, lecimy dalej.
 					continue
 				}
 
 				// znaleźliśmy sekcję. zaczynamy parsowanie.
-				log.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
+				logger.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
 				pola = sekcja.pola
 				atrybuty = sekcja.atrybuty
 
 				if pola == nil {
-					log.Debugf("pusta mapa, tworze nową")
+					logger.Debugf("pusta mapa, tworze nową")
 					pola = make(map[string]string)
 					atrybuty = make(map[string]string)
 				}
 
 				for kol := startSekcji; kol < len(p.naglowki); kol++ {
 					if kol >= sekcja.kolumnaKoniec || p.naglowki[kol] == "stop" {
-						log.Debugf("koniec sekcji")
+						logger.Debugf("koniec sekcji")
 						break
 					}
 					naglowek = p.naglowki[kol]
 					if line[kol] != "" {
-						log.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
+						logger.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
 						if strings.Contains(naglowek, ".") {
 							// to jest atrybut.
 							atrybuty[naglowek] = line[kol]
@@ -121,14 +119,14 @@ func (p *Parser) parsuj() error {
 							pola[naglowek] = strings.TrimRight(line[kol], " ")
 						}
 					} else {
-						log.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
+						logger.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
 					}
 				}
 
 				sekcja.pola = pola
 				sekcja.atrybuty = atrybuty
 
-				log.Debugf("===> KONIEC SEKCJI <=== ")
+				logger.Debugf("===> KONIEC SEKCJI <=== ")
 				sekcja.finish(sekcja)
 			}
 		}

@@ -1,9 +1,15 @@
-package main
+package converter
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/toudi/jpk_vat/common"
 )
 
 const tnsXMLNS = "http://crd.gov.pl/wzor/2020/05/08/9393/"
@@ -40,16 +46,24 @@ func zapisSekcji(xml *os.File, sekcja SekcjaJPK, exclude []string) {
 	}
 }
 
-func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
-	if fileInfo.IsDir() {
-		fileName = fileInfo.Name() + ".jpk"
-	} else {
-		fileName += ".jpk"
+func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error, string) {
+	var err error
+	today := time.Now()
+	fileName := path.Join(common.SessionsDir, strconv.Itoa(today.Year()), fmt.Sprintf("%02d", today.Month()))
+
+	if !common.FileExists(fileName) {
+		os.MkdirAll(fileName, 0775)
+
+		if err = ioutil.WriteFile(path.Join(fileName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym"), 0644); err != nil {
+			return fmt.Errorf("Nie udało się stworzyć pliku z linkiem do podpisu"), ""
+		}
 	}
+
+	fileName = path.Join(fileName, fmt.Sprintf("%s-jpk.xml", fileInfo.Name()))
 
 	xml, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		return fmt.Errorf("Błąd tworzenia pliku wyjściowego: %v", err)
+		return fmt.Errorf("Błąd tworzenia pliku wyjściowego: %v", err), ""
 	}
 	defer xml.Close()
 	xml.Truncate(0)
@@ -119,5 +133,5 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, fileName string) error {
 
 	fmt.Fprintf(xml, "</tns:JPK>")
 
-	return nil
+	return nil, fileName
 }

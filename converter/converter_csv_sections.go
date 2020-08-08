@@ -1,4 +1,4 @@
-package main
+package converter
 
 // ten moduł zawiera informacje o sekcjach JPK. Sekcje pobierają informacje
 // o kolumnach na podstawie konfiguracji w pliku toml.
