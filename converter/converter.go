@@ -7,9 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const ProductionGatewayURL string = "https://e-dokumenty.mf.gov.pl/"
-const TestGatewayURL string = "https://test-e-dokumenty.mf.gov.pl/"
-
 type Converter struct {
 	source   string
 	SAFTFile string
@@ -42,8 +39,9 @@ type SAFTMetadataTemplateVars struct {
 	}
 
 	// dane poszczególnych plików, potrzebne do wygenerowania pliku metadanych
-	SourceMetadata  FileMetadata // dane pliku źródłowego     (.xml)
-	ArchiveMetadata FileMetadata // dane pliku archiwum       (.zip)
+	SourceMetadata    FileMetadata // dane pliku źródłowego     (.xml)
+	ArchiveMetadata   FileMetadata // dane pliku archiwum       (.zip)
+	EncryptedMetadata FileMetadata // dane pliku zaszyfrowanego (.aes)
 }
 
 var metadataTemplateVars SAFTMetadataTemplateVars

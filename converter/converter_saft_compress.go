@@ -3,7 +3,7 @@ package converter
 import (
 	"archive/zip"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"path"
 )
@@ -32,35 +32,16 @@ func (c *Converter) compressSAFTFile() error {
 }
 
 func addFileToZip(zipWriter *zip.Writer, filename string) error {
-	fileToZip, err := os.Open(filename)
+	var err error
+	fileEntry, err := zipWriter.Create(path.Base(filename))
 	if err != nil {
 		return err
 	}
-	defer fileToZip.Close()
-
-	// Get the file information
-	info, err := fileToZip.Stat()
+	fileContents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
+	fileEntry.Write(fileContents)
 
-	header, err := zip.FileInfoHeader(info)
-	if err != nil {
-		return err
-	}
-
-	// Using FileInfoHeader() above only uses the basename of the file. If we want
-	// to preserve the folder structure we can overwrite this with the full path.
-	header.Name = path.Base(filename)
-
-	// Change to deflate to gain better compression
-	// see http://golang.org/pkg/archive/zip/#pkg-constants
-	header.Method = zip.Deflate
-
-	writer, err := zipWriter.CreateHeader(header)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(writer, fileToZip)
-	return err
+	return nil
 }

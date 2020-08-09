@@ -21,28 +21,37 @@ const etdXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2020/03/11/eD/De
 // tym bardziej, ze xml w golang jakos nie bardzo mozna naklonic do wypluwania
 // namespace'ow.
 func zapisSekcji(xml *os.File, sekcja SekcjaJPK, exclude []string) {
-	for pole, wartosc := range sekcja.pola {
-		pomin := false
-		if exclude != nil {
-			for _, e := range exclude {
-				if e == pole {
-					pomin = true
-					break
+	for _, pole := range sekcja.sekcjaParsera.kolejnoscPol {
+		var namespace string = "tns"
+		if sekcja.namespace != "" {
+			namespace = sekcja.namespace
+		}
+		if namespacePola, exists := sekcja.namespacePol[pole]; exists {
+			namespace = namespacePola
+		}
+		if wartosc, ok := sekcja.pola[pole]; ok {
+			pomin := false
+			if exclude != nil {
+				for _, e := range exclude {
+					if e == pole {
+						pomin = true
+						break
+					}
 				}
 			}
-		}
 
-		if pomin {
-			continue
-		}
-
-		fmt.Fprintf(xml, "   <tns:%s", pole)
-		for atrybut, wartoscAtrybutu := range sekcja.atrybuty {
-			if strings.HasPrefix(atrybut, pole) {
-				fmt.Fprintf(xml, " %s=\"%s\"", strings.ReplaceAll(atrybut, pole+".", ""), wartoscAtrybutu)
+			if pomin {
+				continue
 			}
+
+			fmt.Fprintf(xml, "   <%s:%s", namespace, pole)
+			for atrybut, wartoscAtrybutu := range sekcja.atrybuty {
+				if strings.HasPrefix(atrybut, pole) {
+					fmt.Fprintf(xml, " %s=\"%s\"", strings.ReplaceAll(atrybut, pole+".", ""), wartoscAtrybutu)
+				}
+			}
+			fmt.Fprintf(xml, ">%s</%s:%s>\n", wartosc, namespace, pole)
 		}
-		fmt.Fprintf(xml, ">%s</tns:%s>\n", wartosc, pole)
 	}
 }
 
@@ -70,7 +79,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error,
 
 	fmt.Fprintf(xml, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
 
-	fmt.Fprintf(xml, "<tns:JPK xmlns:edt=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n", etdXMLNS, tnsXMLNS, xsiXMLNS)
+	fmt.Fprintf(xml, "<tns:JPK xmlns:etd=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n", etdXMLNS, tnsXMLNS, xsiXMLNS)
 
 	fmt.Fprintf(xml, " <tns:Naglowek>\n")
 	// fmt.Fprintf(xml, "   <tns:DataWytworzeniaJPK>%s</tns:DataWytworzeniaJPK>\n", j.dataWytworzenia.Format("2006-01-02T15:04:05.99"))
@@ -95,8 +104,6 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error,
 	fmt.Fprintf(xml, " </tns:Podmiot1>\n")
 	// sekcja deklaracja (VAT-7)
 	fmt.Fprintf(xml, " <tns:Deklaracja>\n")
-	zapisSekcji(xml, j.deklaracja, nil)
-
 	fmt.Fprintf(xml, "  <tns:Naglowek>\n")
 
 	zapisSekcji(xml, j.deklaracjaNaglowek, nil)
@@ -107,8 +114,11 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error,
 	zapisSekcji(xml, j.deklaracjaPozycjeSzczegolowe, nil)
 
 	fmt.Fprintf(xml, "  </tns:PozycjeSzczegolowe>\n")
-	fmt.Fprintf(xml, " </tns:Deklaracja>\n")
 
+	zapisSekcji(xml, j.deklaracja, nil)
+
+	fmt.Fprintf(xml, " </tns:Deklaracja>\n")
+	fmt.Fprintf(xml, " <tns:Ewidencja>\n")
 	// pozycje sprzedaży
 	for _, sprzedaz := range j.sprzedaz.wierszeSprzedazy {
 		fmt.Fprintf(xml, " <tns:SprzedazWiersz>\n")
@@ -130,7 +140,7 @@ func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error,
 	fmt.Fprintf(xml, " <tns:ZakupCtrl>\n")
 	zapisSekcji(xml, j.kupno.zakupCtrl, nil)
 	fmt.Fprintf(xml, " </tns:ZakupCtrl>\n")
-
+	fmt.Fprintf(xml, " </tns:Ewidencja>\n")
 	fmt.Fprintf(xml, "</tns:JPK>")
 
 	return nil, fileName

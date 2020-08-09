@@ -23,9 +23,9 @@ var certFile string
 
 // jeśli funkcja zauważy, że plik certyfikatu istnieje to po prostu wcześniej wyjdzie.
 func (c *Converter) downloadCertificate() error {
-	gateway := ProductionGatewayURL
+	gateway := common.ProductionGatewayURL
 	if c.GatewayOptions.UseTestGateway {
-		gateway = TestGatewayURL
+		gateway = common.TestGatewayURL
 	}
 	url, _ := url.Parse(gateway)
 
@@ -36,9 +36,11 @@ func (c *Converter) downloadCertificate() error {
 	}
 
 	certFile = path.Join(certsDir, url.Host) + ".crt"
+	logger.Infof("Plik certyfikatu: %s", certFile)
 	certFileExists := common.FileExists(certFile)
 
-	if certFileExists && !c.GatewayOptions.ForceSSLCertRead {
+	if certFileExists {
+		logger.Debugf("Plik certyfikatu znaleziony; no-op")
 		return nil
 	}
 
@@ -72,6 +74,7 @@ func (c *Converter) downloadCertificate() error {
 // funkcja szyfruje ciąg bajtów za pomocą klucza publicznego z certyfikatu ministerstwa
 func (c *Converter) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 	var err error
+	logger.Debugf("Co będzie szyfrowane: %+v", key)
 	c.downloadCertificate()
 	certFileBytes, err := ioutil.ReadFile(certFile)
 
@@ -84,6 +87,7 @@ func (c *Converter) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 		return nil, fmt.Errorf("Nie udało się sparsować certyfikatu z pliku: %v", err)
 	}
 	publicKey := cert.PublicKey.(*rsa.PublicKey)
+	logger.Debugf("Klucz publiczny: %v; size=%d", publicKey, publicKey.Size())
 	if err != nil {
 		return nil, fmt.Errorf("Nie udało się odczytać klucza publicznego z certyfikatu: %v", err)
 	}

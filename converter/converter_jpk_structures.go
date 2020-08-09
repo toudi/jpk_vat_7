@@ -8,7 +8,10 @@ type SekcjaJPK struct {
 	pola map[string]string
 	// atrybuty pól. atrybut musi zaczynać się nazwą pola, np.
 	// KodFormularza.kodSystemowy
-	atrybuty map[string]string
+	atrybuty      map[string]string
+	sekcjaParsera *SekcjaParsera
+	namespace     string
+	namespacePol  map[string]string
 }
 
 type Podmiot struct {

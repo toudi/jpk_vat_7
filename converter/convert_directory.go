@@ -16,23 +16,23 @@ func (c *Converter) convertDirectory() error {
 
 	logger.Debugf("Tryb konwersji katalogu")
 
-	if err = parser(filepath.Join(c.source, plikNaglowek), []Sekcja{sekcjaNaglowek}); err != nil {
+	if err = parser(filepath.Join(c.source, plikNaglowek), []SekcjaParsera{sekcjaNaglowek}); err != nil {
 		return fmt.Errorf("Błąd tworzenia instancji parsera nagłówka: %v", err)
 	}
 
-	if err = parser(filepath.Join(c.source, plikPodmiot), []Sekcja{sekcjaPodmiot}); err != nil {
+	if err = parser(filepath.Join(c.source, plikPodmiot), []SekcjaParsera{sekcjaPodmiot}); err != nil {
 		return fmt.Errorf("Błąd tworzenia instancji parsera podmiotu: %v", err)
 	}
 
-	if err = parser(filepath.Join(c.source, plikDeklaracja), []Sekcja{sekcjaDeklaracja}); err != nil {
+	if err = parser(filepath.Join(c.source, plikDeklaracja), []SekcjaParsera{sekcjaDeklaracja}); err != nil {
 		return fmt.Errorf("Błąd tworzenia instancji parsera deklaracji: %v", err)
 	}
 
-	if err = parser(filepath.Join(c.source, plikSprzedaz), []Sekcja{sekcjaSprzedaz, sekcjaSprzedazCtrl}); err != nil {
+	if err = parser(filepath.Join(c.source, plikSprzedaz), []SekcjaParsera{sekcjaSprzedaz, sekcjaSprzedazCtrl}); err != nil {
 		return fmt.Errorf("Błąd tworzenia instancji parsera sprzedaży: %v", err)
 	}
 
-	if err = parser(filepath.Join(c.source, plikKupno), []Sekcja{sekcjaZakup, sekcjaZakupCtrl}); err != nil {
+	if err = parser(filepath.Join(c.source, plikKupno), []SekcjaParsera{sekcjaZakup, sekcjaZakupCtrl}); err != nil {
 		return fmt.Errorf("Błąd tworzenia instancji parsera zakupu: %v", err)
 	}
 

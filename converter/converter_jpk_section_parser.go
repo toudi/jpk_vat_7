@@ -17,10 +17,10 @@ type Parser struct {
 	// naglowki służą do sprawdzenia czy struktura się zgadza.
 	naglowki []string
 	// sekcje definiują nam co będziemy parsować.
-	sekcje []Sekcja
+	sekcje []SekcjaParsera
 }
 
-func parser(filePath string, sekcje []Sekcja) error {
+func parser(filePath string, sekcje []SekcjaParsera) error {
 	var err error
 	p, err := parserInit(filePath)
 	if err != nil {
@@ -105,12 +105,17 @@ func (p *Parser) parsuj() error {
 				}
 
 				for kol := startSekcji; kol < len(p.naglowki); kol++ {
+					if sekcja.kolejnoscPol == nil {
+						sekcja.kolejnoscPol = make([]string, 0)
+					}
 					if kol >= sekcja.kolumnaKoniec || p.naglowki[kol] == "stop" {
 						logger.Debugf("koniec sekcji")
 						break
 					}
 					naglowek = p.naglowki[kol]
+					sekcja.kolejnoscPol = append(sekcja.kolejnoscPol, naglowek)
 					if line[kol] != "" {
+						line[kol] = strings.ReplaceAll(line[kol], "&", "&amp;")
 						logger.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
 						if strings.Contains(naglowek, ".") {
 							// to jest atrybut.
@@ -139,7 +144,7 @@ func (p *Parser) Close() {
 }
 
 func (j *JPK) parsujCSV(fileName string) error {
-	return parser(fileName, []Sekcja{
+	return parser(fileName, []SekcjaParsera{
 		sekcjaNaglowek,
 		sekcjaDeklaracjaNaglowek,
 		sekcjaPodmiot,

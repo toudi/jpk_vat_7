@@ -2,13 +2,15 @@ package commands
 
 import (
 	"flag"
-	"fmt"
+
+	"github.com/toudi/jpk_vat/uploader"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type uploadArgsType struct {
 	UseTestGateway bool
+	Verbose        bool
 }
 
 type uploadCommand struct {
@@ -30,10 +32,13 @@ func init() {
 		logger: log.New(),
 	}
 	UploadCmd.FlagSet.BoolVar(&uploadArgs.UseTestGateway, "t", false, "użyj testowego środowiska")
+	UploadCmd.FlagSet.BoolVar(&uploadArgs.Verbose, "v", false, "tryb verbose (zwiększa ilość informacji na wyjściu)")
 }
 
 func uploadRun(c *Command) error {
-	args := c.Args.(*uploadArgsType)
-	fmt.Printf("test=%v\n", args.UseTestGateway)
-	return nil
+	fileName := c.FlagSet.Arg(0)
+	uploader := uploader.UploaderInit(fileName, uploadArgs.Verbose)
+	uploader.UseTestGateway = uploadArgs.UseTestGateway
+
+	return uploader.UploadSAFTFile()
 }

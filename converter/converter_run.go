@@ -28,6 +28,9 @@ func (c *Converter) Run() error {
 	}
 
 	jpk.inicjalizujSekcje()
+	jpk.podmiot.osobaFizyczna.namespace = "etd"
+	jpk.podmiot.osobaFizyczna.namespacePol = make(map[string]string)
+	jpk.podmiot.osobaFizyczna.namespacePol["Email"] = "tns"
 
 	if statInfo.IsDir() {
 		err = c.convertDirectory()
@@ -70,6 +73,7 @@ func (c *Converter) Run() error {
 	if err = c.encryptSAFTFile(); err != nil {
 		return fmt.Errorf("Nie udało się zaszyfrować skompresowanego pliku JPK: %v", err)
 	}
+	metadataTemplateVars.EncryptedMetadata.ContentHash = common.Md5File(c.encryptedArchiveFile())
 
 	if err = c.createSAFTMetadataFile(); err != nil {
 		return fmt.Errorf("Nie udało się stworzyć pliku metadanych JPK: %v", err)

@@ -37,7 +37,7 @@ var jpkMetaXmlTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 					<OrdinalNumber>1</OrdinalNumber>
 					<FileName>{{ .ArchiveMetadata.Filename }}</FileName>
 					<ContentLength>{{ .ArchiveMetadata.Size }}</ContentLength>
-					<HashValue algorithm="MD5" encoding="Base64">{{ base64 .ArchiveMetadata.ContentHash }}</HashValue>
+					<HashValue algorithm="MD5" encoding="Base64">{{ base64 .EncryptedMetadata.ContentHash }}</HashValue>
 				</FileSignature>
 			</FileSignatureList>
 		</Document>

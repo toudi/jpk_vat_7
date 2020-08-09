@@ -18,23 +18,21 @@ func (c *Converter) encryptSAFTFile() error {
 	var err error
 
 	logger.Debugf("Generuję klucz do szyfrowania pliku %s\n", c.compressedSAFTFile())
-	key := make([]byte, aes.BlockSize)
+	key := make([]byte, 32)
+	iv := make([]byte, 16)
 
 	_, err = rand.Read(key)
 	if err != nil {
 		return fmt.Errorf("Nie udało się wygenerować klucza szyfrującego: %v", err)
 	}
 
-	logger.Debugf("Klucz szyfrujący: %v", key)
-
-	iv := make([]byte, aes.BlockSize)
-	metadataTemplateVars.IV = make([]byte, aes.BlockSize)
-
 	if _, err = rand.Read(iv); err != nil {
 		return fmt.Errorf("Nie udało się odczytać wektora inicjalizującego: %v", err)
 	}
 
-	block, err := aes.NewCipher(key[:])
+	logger.Debugf("Klucz szyfrujący: %v", key)
+
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return fmt.Errorf("Nie udało się stworzyć instancji szyfru")
 	}
@@ -45,10 +43,14 @@ func (c *Converter) encryptSAFTFile() error {
 		return fmt.Errorf("Nie udało się odczytać pliku archiwum: %v", err)
 	}
 	plaintext, _ := pkcs7Pad(archiveFileBytes, block.BlockSize())
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	ciphertext := make([]byte, len(plaintext))
+
+	metadataTemplateVars.IV = make([]byte, aes.BlockSize)
+	copy(metadataTemplateVars.IV, iv)
+	logger.Debugf("wektor inicjalizujący (IV): %v", iv)
 
 	bm := cipher.NewCBCEncrypter(block, iv)
-	bm.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
+	bm.CryptBlocks(ciphertext, plaintext)
 
 	encryptedFile, err := os.Create(c.encryptedArchiveFile())
 	if err != nil {
@@ -60,10 +62,6 @@ func (c *Converter) encryptSAFTFile() error {
 	}
 
 	logger.Debugf("Pomyślnie zaszyfrnowano: %s => %s", path.Base(c.compressedSAFTFile()), path.Base(c.encryptedArchiveFile()))
-
-	// wstawienie zmiennych do szablonu.
-
-	copy(metadataTemplateVars.IV, iv)
 
 	// zaszyfrowanie klucza kluczem publicznym z certyfikatu ministerstwa
 	encryptedKey, err := c.encryptKeyWithCertificate(key)
@@ -92,16 +90,14 @@ var (
 // pkcs7Pad right-pads the given byte slice with 1 to n bytes, where
 // n is the block size. The size of the result is x times n, where x
 // is at least 1.
-func pkcs7Pad(b []byte, blocksize int) ([]byte, error) {
-	if blocksize <= 0 {
+func pkcs7Pad(data []byte, blockSize int) ([]byte, error) {
+	if blockSize <= 0 {
 		return nil, ErrInvalidBlockSize
 	}
-	if b == nil || len(b) == 0 {
+	if data == nil || len(data) == 0 {
 		return nil, ErrInvalidPKCS7Data
 	}
-	n := blocksize - (len(b) % blocksize)
-	pb := make([]byte, len(b)+n)
-	copy(pb, b)
-	copy(pb[len(b):], bytes.Repeat([]byte{byte(n)}, n))
-	return pb, nil
+	padLen := blockSize - len(data)%blockSize
+	padding := bytes.Repeat([]byte{byte(padLen)}, padLen)
+	return append(data, padding...), nil
 }
