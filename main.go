@@ -9,7 +9,11 @@ import (
 )
 
 var err error
-var availableCommands = []commands.Command{commands.GenerateCmd.Command, commands.UploadCmd.Command}
+var availableCommands = []commands.Command{
+	commands.GenerateCmd.Command,
+	commands.UploadCmd.Command,
+	commands.StatusCmd.Command,
+}
 
 func usage() {
 	fmt.Printf("Proszę użyć jednej z subkomend:\n\n")
