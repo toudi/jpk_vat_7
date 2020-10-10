@@ -4,16 +4,23 @@ import (
 	"path"
 	"strings"
 
+	"github.com/toudi/jpk_vat/common"
+
 	log "github.com/sirupsen/logrus"
 )
 
 type Converter struct {
 	source   string
 	SAFTFile string
+	cipher   *common.Cipher
 
 	GatewayOptions struct {
-		UseTestGateway   bool
-		ForceSSLCertRead bool
+		UseTestGateway bool
+	}
+
+	GeneratorOptions struct {
+		GenerateAuthData bool
+		AuthData         common.AuthData
 	}
 }
 
@@ -42,6 +49,9 @@ type SAFTMetadataTemplateVars struct {
 	SourceMetadata    FileMetadata // dane pliku źródłowego     (.xml)
 	ArchiveMetadata   FileMetadata // dane pliku archiwum       (.zip)
 	EncryptedMetadata FileMetadata // dane pliku zaszyfrowanego (.aes)
+	// xml AuthData który będzie użyty tylko jeśli użyjemy autoryzacji za
+	// pomocą kwoty przychodu.
+	AuthDataXML []byte
 }
 
 var metadataTemplateVars SAFTMetadataTemplateVars

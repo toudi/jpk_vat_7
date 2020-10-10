@@ -43,7 +43,7 @@ func (u *Uploader) initUploadSigned() (*initUploadSignedResponseType, error) {
 
 	err = xml.Unmarshal(saftMetadataContent, saftMetadata)
 	if err != nil {
-		return nil, fmt.Errorf("Nie udało się odczytać metadanych pliku JPK")
+		return nil, fmt.Errorf("Nie udało się odczytać metadanych pliku JPK: %v", err)
 	}
 
 	request, err := http.NewRequest("POST", u.gatewayURL()+"/api/Storage/InitUploadSigned", reader)
@@ -54,8 +54,12 @@ func (u *Uploader) initUploadSigned() (*initUploadSignedResponseType, error) {
 
 	request.Header.Set("Content-Type", "application/xml")
 	response, err := httpClient.Do(request)
+	if response.Body != nil {
+		defer response.Body.Close()
+	}
+	content, _ := ioutil.ReadAll(response.Body)
 	if response.StatusCode != 200 || err != nil {
-		return nil, fmt.Errorf("Nie udało się wysłać żądania HTTP: %v", err)
+		return nil, fmt.Errorf("Nie udało się wysłać żądania HTTP: %v; kod odpowiedzi: %v; błąd: %v", string(content), response.StatusCode, err)
 	}
 	defer response.Body.Close()
 

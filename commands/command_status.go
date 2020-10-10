@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
-	"path"
+	"strings"
 
 	"github.com/toudi/jpk_vat/common"
 )
@@ -39,20 +36,20 @@ func init() {
 			Args:        nil,
 		},
 	}
-	GenerateCmd.FlagSet.Usage = func() {
+	StatusCmd.FlagSet.Usage = func() {
 		fmt.Printf("Użycie komendy: jpk_vat status plik-z-rozszerzeniem.ref\n")
 	}
 }
 
 func statusRun(c *Command) error {
 	var err error
-	var workdir string
+	// var workdir string
 
 	if c.FlagSet.NArg() == 0 {
 		GenerateCmd.FlagSet.Usage()
 	} else {
 		refFileName := c.FlagSet.Arg(0)
-		workdir = path.Dir(refFileName)
+		// workdir = path.Dir(refFileName)
 		URLStatusBytes, err := ioutil.ReadFile(refFileName)
 		if err != nil {
 			return fmt.Errorf("Nie udało się odczytać pliku z numerem referencyjnym")
@@ -76,23 +73,13 @@ func statusRun(c *Command) error {
 		)
 
 		if response.StatusCode == 200 {
-			UPOUrl, _ := url.Parse(statusResponse.UPO)
-			UPOFileName := path.Join(workdir, path.Base(UPOUrl.Path))
+			UPOFileName := strings.Replace(refFileName, ".ref", ".upo", 1)
 			if !common.FileExists(UPOFileName) {
 				fmt.Printf("Status przesyłania JPK poprawny; pobieram UPO\n")
 
-				downloadResponse, err := http.Get(statusResponse.UPO)
-				if err != nil {
-					return fmt.Errorf("Nie udało się pobrać pliku: %v", err)
+				if err = ioutil.WriteFile(UPOFileName, []byte(statusResponse.UPO), 0644); err != nil {
+					return fmt.Errorf("Nie udało się zapisać UPO: %v", err)
 				}
-				defer downloadResponse.Body.Close()
-
-				upoFile, err := os.Create(UPOFileName)
-				if err != nil {
-					return fmt.Errorf("Nie udało się stworzyć pliku UPO: %v", err)
-				}
-				defer upoFile.Close()
-				_, err = io.Copy(upoFile, downloadResponse.Body)
 			}
 
 		}

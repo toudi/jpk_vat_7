@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -8,6 +9,15 @@ import (
 	"strings"
 	"text/template"
 )
+
+var jpkAuthDataTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
+<podp:DaneAutoryzujace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:podp="http://e-deklaracje.mf.gov.pl/Repozytorium/Definicje/Podpis/">
+	<podp:NIP>{{ .NIP }}</podp:NIP>
+	<podp:ImiePierwsze>{{ .ImiePierwsze }}</podp:ImiePierwsze>
+	<podp:Nazwisko>{{ .Nazwisko }}</podp:Nazwisko>
+	<podp:DataUrodzenia>{{ .DataUrodzenia }}</podp:DataUrodzenia>
+	<podp:Kwota>{{ .Income }}</podp:Kwota>
+</podp:DaneAutoryzujace>`
 
 var jpkMetaXmlTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 <InitUpload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://e-dokumenty.mf.gov.pl">
@@ -42,6 +52,11 @@ var jpkMetaXmlTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 			</FileSignatureList>
 		</Document>
 	</DocumentList>
+	{{ if .AuthDataXML }}
+	<AuthData>
+	    {{ base64 .AuthDataXML }}
+	</AuthData>
+	{{ end }}
 </InitUpload>`
 
 func (c *Converter) saftMetadataFile() string {
@@ -54,6 +69,24 @@ func (c *Converter) createSAFTMetadataFile() error {
 	}
 
 	var err error
+
+	if c.GeneratorOptions.GenerateAuthData {
+		var authDataXMLBuffer bytes.Buffer
+		tmpl, err := template.New("jpk-authdata").Funcs(funcMap).Parse(jpkAuthDataTemplate)
+		if err != nil {
+			return fmt.Errorf("Nie udało się sparsować szablonu dla danych autoryzujących JPK: %v", err)
+		}
+		fmt.Printf("Dane autoryzujące: %+v", c.GeneratorOptions.AuthData)
+		if err = tmpl.Execute(&authDataXMLBuffer, c.GeneratorOptions.AuthData); err != nil {
+			return fmt.Errorf("Nie udało się wygenerować dokumentu AuthData: %v", err)
+		}
+
+		fmt.Printf("Dane autoryzujące: %s\n", authDataXMLBuffer.String())
+
+		encryptedAuthDataXML := c.cipher.Encrypt(authDataXMLBuffer.Bytes(), true)
+		metadataTemplateVars.AuthDataXML = make([]byte, len(encryptedAuthDataXML))
+		copy(metadataTemplateVars.AuthDataXML, encryptedAuthDataXML)
+	}
 
 	tmpl, err := template.New("jpk-metadata").Funcs(funcMap).Parse(jpkMetaXmlTemplate)
 	if err != nil {
