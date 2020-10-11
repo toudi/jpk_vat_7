@@ -63,7 +63,8 @@ func (u *Uploader) initUploadSigned() (*initUploadSignedResponseType, error) {
 	}
 	defer response.Body.Close()
 
-	err = json.NewDecoder(response.Body).Decode(&initUploadSignedResponse)
+	logger.Debugf("Odpowiedź serwera: %d\n%s\n", response.StatusCode, string(content))
+	err = json.NewDecoder(bytes.NewReader(content)).Decode(&initUploadSignedResponse)
 
 	if err != nil {
 		return nil, fmt.Errorf("Nie udało się sparsować odpowiedzi: %v", err)
