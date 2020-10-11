@@ -11,10 +11,11 @@ import (
 )
 
 type generateArgsType struct {
-	Verbose          bool
-	TestGateway      bool
-	GenerateAuthData bool
-	AuthData         common.AuthData
+	Verbose                bool
+	TestGateway            bool
+	GenerateAuthData       bool
+	AuthData               common.AuthData
+	EncodingConversionFile string
 }
 
 type generateCommand struct {
@@ -42,6 +43,7 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.ImiePierwsze, "a:fn", "", "pole ImiePierwsze dla autoryzacji")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.Nazwisko, "a:ln", "", "pole Nazwisko dla autoryzacji")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.DataUrodzenia, "a:bd", "", "pole DataUrodzenia dla autoryzacji. Format: YYYY-MM-DD")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z mapą konwersji znaków")
 
 	GenerateCmd.FlagSet.SetOutput(os.Stdout)
 	GenerateCmd.FlagSet.Usage = func() {
@@ -60,6 +62,9 @@ func generateRun(c *Command) error {
 		converter.GatewayOptions.UseTestGateway = args.TestGateway
 		converter.GeneratorOptions.GenerateAuthData = args.GenerateAuthData
 		converter.GeneratorOptions.AuthData = args.AuthData
+		if args.EncodingConversionFile != "" {
+			converter.PrepareEncodingConversionTable(args.EncodingConversionFile)
+		}
 		return converter.Run()
 	}
 	return nil

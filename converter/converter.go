@@ -55,6 +55,7 @@ type SAFTMetadataTemplateVars struct {
 }
 
 var metadataTemplateVars SAFTMetadataTemplateVars
+var encodingConversion map[byte]string
 
 func (c *Converter) SAFTFileName() string {
 	return path.Base(c.SAFTFile)

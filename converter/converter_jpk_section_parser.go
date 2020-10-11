@@ -116,6 +116,9 @@ func (p *Parser) parsuj() error {
 					sekcja.kolejnoscPol = append(sekcja.kolejnoscPol, naglowek)
 					if line[kol] != "" {
 						line[kol] = strings.ReplaceAll(line[kol], "&", "&amp;")
+						if encodingConversion != nil {
+							line[kol] = convertEncoding(line[kol])
+						}
 						logger.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
 						if strings.Contains(naglowek, ".") {
 							// to jest atrybut.
