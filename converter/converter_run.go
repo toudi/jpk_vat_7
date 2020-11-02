@@ -45,7 +45,7 @@ func (c *Converter) Run() error {
 	metadataTemplateVars.Metadata.SchemaVersion = jpk.naglowek.atrybuty["KodFormularza.wersjaSchemy"]
 	metadataTemplateVars.Metadata.SystemCode = jpk.naglowek.atrybuty["KodFormularza.kodSystemowy"]
 
-	err, output := jpk.zapiszDoPliku(statInfo, path.Base(c.source))
+	err, output := jpk.zapiszDoPliku(statInfo, c.source, c.GeneratorOptions.UseCurrentDir)
 
 	if err != nil {
 		return fmt.Errorf("Nie udało się zapisać pliku JPK : %v", err)

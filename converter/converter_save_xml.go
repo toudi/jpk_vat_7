@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -55,20 +56,25 @@ func zapisSekcji(xml *os.File, sekcja SekcjaJPK, exclude []string) {
 	}
 }
 
-func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceBaseName string) (error, string) {
+func (j *JPK) zapiszDoPliku(fileInfo os.FileInfo, sourceName string, useCurrentDir bool) (error, string) {
 	var err error
 	today := time.Now()
-	fileName := path.Join(common.SessionsDir, strconv.Itoa(today.Year()), fmt.Sprintf("%02d", today.Month()))
 
-	if !common.FileExists(fileName) {
-		os.MkdirAll(fileName, 0775)
+	outputDir := path.Join(common.SessionsDir, strconv.Itoa(today.Year()), fmt.Sprintf("%02d", today.Month()))
 
-		if err = ioutil.WriteFile(path.Join(fileName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym"), 0644); err != nil {
-			return fmt.Errorf("Nie udało się stworzyć pliku z linkiem do podpisu"), ""
-		}
+	if useCurrentDir {
+		outputDir = filepath.Dir(sourceName)
 	}
 
-	fileName = path.Join(fileName, fmt.Sprintf("%s-jpk.xml", fileInfo.Name()))
+	if !common.FileExists(outputDir) {
+		os.MkdirAll(outputDir, 0775)
+	}
+
+	if err = ioutil.WriteFile(path.Join(outputDir, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym"), 0644); err != nil {
+		return fmt.Errorf("Nie udało się stworzyć pliku z linkiem do podpisu"), ""
+	}
+
+	fileName := path.Join(outputDir, fmt.Sprintf("%s-jpk.xml", fileInfo.Name()))
 
 	xml, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {

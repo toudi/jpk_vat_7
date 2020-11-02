@@ -16,6 +16,7 @@ type generateArgsType struct {
 	GenerateAuthData       bool
 	AuthData               common.AuthData
 	EncodingConversionFile string
+	UseCurrentDir          bool
 }
 
 type generateCommand struct {
@@ -38,6 +39,7 @@ func init() {
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.Verbose, "v", false, "tryb verbose (zwiększa poziom komunikatów wyjściowych)")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.TestGateway, "t", false, "użycie bramki testowej do generowania metadanych")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.GenerateAuthData, "a", false, "wygeneruj strukturę AuthData (alternatywa dla podpisu kwalifikowanego)")
+	GenerateCmd.FlagSet.BoolVar(&generateArgs.UseCurrentDir, "cd", false, "użycie bieżącego katalogu do wygenerowania pliku wynikowego")
 	GenerateCmd.FlagSet.Float64Var(&generateArgs.AuthData.Income, "a:i", 0.0, "użyj autoryzacji za pomocą kwoty przychodu")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.NIP, "a:n", "", "numer NIP dla autoryzacji")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.ImiePierwsze, "a:fn", "", "pole ImiePierwsze dla autoryzacji")
@@ -62,6 +64,7 @@ func generateRun(c *Command) error {
 		converter.GatewayOptions.UseTestGateway = args.TestGateway
 		converter.GeneratorOptions.GenerateAuthData = args.GenerateAuthData
 		converter.GeneratorOptions.AuthData = args.AuthData
+		converter.GeneratorOptions.UseCurrentDir = args.UseCurrentDir
 		if args.EncodingConversionFile != "" {
 			converter.PrepareEncodingConversionTable(args.EncodingConversionFile)
 		}

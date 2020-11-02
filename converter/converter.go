@@ -21,6 +21,7 @@ type Converter struct {
 	GeneratorOptions struct {
 		GenerateAuthData bool
 		AuthData         common.AuthData
+		UseCurrentDir    bool
 	}
 }
 
