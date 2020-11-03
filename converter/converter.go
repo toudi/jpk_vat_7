@@ -22,6 +22,7 @@ type Converter struct {
 		GenerateAuthData bool
 		AuthData         common.AuthData
 		UseCurrentDir    bool
+		GenerateMetadata bool
 	}
 }
 

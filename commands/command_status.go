@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,6 +17,7 @@ type statusCommand struct {
 }
 
 var StatusCmd *statusCommand
+var UpoDownloadURL = "https://e-mikrofirma.mf.gov.pl/jpk-client/api/status/%s/pdf"
 
 type statusResponseType struct {
 	Code        int
@@ -26,6 +28,8 @@ type statusResponseType struct {
 
 var statusResponse statusResponseType
 var httpClient = http.DefaultClient
+var downloadPDF = false
+var refNo string
 
 func init() {
 	StatusCmd = &statusCommand{
@@ -54,6 +58,12 @@ func statusRun(c *Command) error {
 		if err != nil {
 			return fmt.Errorf("Nie udało się odczytać pliku z numerem referencyjnym")
 		}
+		if bytes.HasPrefix(URLStatusBytes, []byte(common.ProductionGatewayURL)) {
+			// środowisko testowe wysyła UPO jedynie w XML
+			downloadPDF = true
+			refNoParts := strings.Split(string(URLStatusBytes), "/")
+			refNo = refNoParts[len(refNoParts)-1]
+		}
 		request, err := http.NewRequest("GET", string(URLStatusBytes), nil)
 		if err != nil {
 			return fmt.Errorf("Nie udało się zainicjować sprawdzania statusu")
@@ -73,12 +83,34 @@ func statusRun(c *Command) error {
 		)
 
 		if response.StatusCode == 200 {
-			UPOFileName := strings.Replace(refFileName, ".ref", ".upo", 1)
+			UPOFileName := strings.Replace(refFileName, ".ref", "-upo.xml", 1)
+			if downloadPDF {
+				UPOFileName = strings.Replace(refFileName, ".ref", "-upo.pdf", 1)
+			}
 			if !common.FileExists(UPOFileName) {
 				fmt.Printf("Status przesyłania JPK poprawny; pobieram UPO\n")
 
-				if err = ioutil.WriteFile(UPOFileName, []byte(statusResponse.UPO), 0644); err != nil {
-					return fmt.Errorf("Nie udało się zapisać UPO: %v", err)
+				if downloadPDF {
+					upoDownloadReq, err := http.NewRequest("GET", fmt.Sprintf(UpoDownloadURL, refNo), nil)
+					if err != nil {
+						return fmt.Errorf("Nie udało się zainicjować pobierania UPO")
+					}
+					upoDownloadResponse, err := httpClient.Do(upoDownloadReq)
+					if err != nil {
+						return fmt.Errorf("Nie udało się pobrać UPO")
+					}
+					defer upoDownloadResponse.Body.Close()
+					upoContent, err := ioutil.ReadAll(upoDownloadResponse.Body)
+					if err != nil {
+						return fmt.Errorf("Nie udało się odczytać bajtów UPO z odpowiedzi HTTP")
+					}
+					if err = ioutil.WriteFile(UPOFileName, upoContent, 0644); err != nil {
+						return fmt.Errorf("Nie udało się zapisać UPO na dysk")
+					}
+				} else {
+					if err = ioutil.WriteFile(UPOFileName, []byte(statusResponse.UPO), 0644); err != nil {
+						return fmt.Errorf("Nie udało się zapisać UPO: %v", err)
+					}
 				}
 			}
 

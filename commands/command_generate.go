@@ -17,6 +17,7 @@ type generateArgsType struct {
 	AuthData               common.AuthData
 	EncodingConversionFile string
 	UseCurrentDir          bool
+	GenerateMetadata       bool
 }
 
 type generateCommand struct {
@@ -46,6 +47,7 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.Nazwisko, "a:ln", "", "pole Nazwisko dla autoryzacji")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.AuthData.DataUrodzenia, "a:bd", "", "pole DataUrodzenia dla autoryzacji. Format: YYYY-MM-DD")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z mapą konwersji znaków")
+	GenerateCmd.FlagSet.BoolVar(&generateArgs.GenerateMetadata, "m", false, "generuj plik metadanych (wymagane jeśli nie zostanie użyty klient JPK Web)")
 
 	GenerateCmd.FlagSet.SetOutput(os.Stdout)
 	GenerateCmd.FlagSet.Usage = func() {
@@ -65,6 +67,7 @@ func generateRun(c *Command) error {
 		converter.GeneratorOptions.GenerateAuthData = args.GenerateAuthData
 		converter.GeneratorOptions.AuthData = args.AuthData
 		converter.GeneratorOptions.UseCurrentDir = args.UseCurrentDir
+		converter.GeneratorOptions.GenerateMetadata = args.GenerateMetadata
 		if args.EncodingConversionFile != "" {
 			converter.PrepareEncodingConversionTable(args.EncodingConversionFile)
 		}

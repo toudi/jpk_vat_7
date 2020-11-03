@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/toudi/jpk_vat/common"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var jpk *JPK
@@ -52,35 +50,40 @@ func (c *Converter) Run() error {
 	}
 
 	c.SAFTFile = output
-	metadataTemplateVars.SourceMetadata.Filename = c.SAFTFileName()
-	if metadataTemplateVars.SourceMetadata.Size, err = common.FileSize(output); err != nil {
-		return fmt.Errorf("Nie udało się obliczyć rozmiaru pliku jpk: %v", err)
-	}
-	metadataTemplateVars.SourceMetadata.ContentHash = common.Sha256File(output)
 
-	// pakowanie pliku JPK do archiwum
-	if err = c.compressSAFTFile(); err != nil {
-		return fmt.Errorf("Nie udało się spakować pliku JPK do archiwum: %v", err)
-	}
+	if c.GeneratorOptions.GenerateMetadata {
+		metadataTemplateVars.SourceMetadata.Filename = c.SAFTFileName()
+		if metadataTemplateVars.SourceMetadata.Size, err = common.FileSize(output); err != nil {
+			return fmt.Errorf("Nie udało się obliczyć rozmiaru pliku jpk: %v", err)
+		}
+		metadataTemplateVars.SourceMetadata.ContentHash = common.Sha256File(output)
 
-	// pakowanie pomyślne, możemy dodać metadane.
-	metadataTemplateVars.ArchiveMetadata.Filename = path.Base(c.compressedSAFTFile())
-	if metadataTemplateVars.ArchiveMetadata.Size, err = common.FileSize(c.compressedSAFTFile()); err != nil {
-		return fmt.Errorf("Nie udało się obliczyć rozmiaru archiwum")
-	}
-	metadataTemplateVars.ArchiveMetadata.ContentHash = common.Md5File(c.compressedSAFTFile())
+		// pakowanie pliku JPK do archiwum
+		if err = c.compressSAFTFile(); err != nil {
+			return fmt.Errorf("Nie udało się spakować pliku JPK do archiwum: %v", err)
+		}
 
-	if err = c.encryptSAFTFile(); err != nil {
-		return fmt.Errorf("Nie udało się zaszyfrować skompresowanego pliku JPK: %v", err)
-	}
-	metadataTemplateVars.EncryptedMetadata.ContentHash = common.Md5File(c.encryptedArchiveFile())
+		// pakowanie pomyślne, możemy dodać metadane.
+		metadataTemplateVars.ArchiveMetadata.Filename = path.Base(c.compressedSAFTFile())
+		if metadataTemplateVars.ArchiveMetadata.Size, err = common.FileSize(c.compressedSAFTFile()); err != nil {
+			return fmt.Errorf("Nie udało się obliczyć rozmiaru archiwum")
+		}
+		metadataTemplateVars.ArchiveMetadata.ContentHash = common.Md5File(c.compressedSAFTFile())
 
-	if err = c.createSAFTMetadataFile(); err != nil {
-		return fmt.Errorf("Nie udało się stworzyć pliku metadanych JPK: %v", err)
-	}
+		if err = c.encryptSAFTFile(); err != nil {
+			return fmt.Errorf("Nie udało się zaszyfrować skompresowanego pliku JPK: %v", err)
+		}
+		metadataTemplateVars.EncryptedMetadata.ContentHash = common.Md5File(c.encryptedArchiveFile())
 
-	log.Infof("Zapis do pliku zakończony; Plik do podpisu: %s\n", c.saftMetadataFile())
-	log.Infof("Aby podpisać plik:\n- użyj czytnika z podpisem kwalifikowanym\n- wejdź na stronę: https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym (link znajdziesz w katalogu z plikiem źródłowym)\n")
+		if err = c.createSAFTMetadataFile(); err != nil {
+			return fmt.Errorf("Nie udało się stworzyć pliku metadanych JPK: %v", err)
+		}
+
+		fmt.Printf("Zapis do pliku zakończony; Plik do podpisu: %s\n", c.saftMetadataFile())
+		fmt.Printf("Aby podpisać plik:\n- użyj czytnika z podpisem kwalifikowanym\n- wejdź na stronę: https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym (link znajdziesz w katalogu z plikiem źródłowym)\n")
+	} else {
+		fmt.Printf("Konwersja zakończona.\nNie wybrano opcji generowania metadanych.\nProszę skorzystać z poniższego narzędzia aby dokończyć wysyłanie pliku:\nhttps://e-mikrofirma.mf.gov.pl/jpk-client\n")
+	}
 
 	return nil
 }
