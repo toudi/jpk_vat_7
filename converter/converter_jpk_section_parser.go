@@ -80,9 +80,6 @@ func (p *Parser) parsuj() error {
 			}
 		}
 	}
-	if p.mode == ParserModeSingleFileWithSections {
-		p.finish()
-	}
 	return nil
 }
 

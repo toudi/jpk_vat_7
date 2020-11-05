@@ -19,22 +19,26 @@ var sekcjaParsera *SekcjaParsera
 var parserState int = StateDetectSection
 var headers []string
 
+func (p *Parser) emptyLine(line []string) bool {
+	for _, item := range line {
+		if item != "" {
+			return false
+		}
+	}
+	return true
+}
 func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 	var exists bool
+
 	if line[0] == "SEKCJA" {
-		fmt.Printf("parser state: %v (%v)\n", parserState, StateParseData)
-		if parserState == StateParseData {
-			// należy zakończyć parsowanie danych z poprzedniej sekcji.
-			sekcjaParsera.finish(sekcjaParsera)
-		}
 		// próba odnalezienia sekcji
 		sekcjaParsera, exists = sekcje[line[1]]
 		if !exists {
 			return fmt.Errorf("Błąd: Nieznana sekcja: %s", line[1])
 		}
 		parserState = StateDetectHeaders
-	} else if line[0] == "" {
-		// pusta linia, ignorujemy
+	} else if p.emptyLine(line) {
+		// pusta linia, ignorujemy.
 		return nil
 	} else if parserState == StateDetectHeaders {
 		// parsujemy nagłówki
@@ -42,6 +46,9 @@ func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 		sekcjaParsera.SetHeaders(line)
 		parserState = StateParseData
 	} else if parserState == StateParseData {
+		sekcjaParsera.pola = make(map[string]string)
+		sekcjaParsera.atrybuty = make(map[string]string)
+
 		// parsujemy dane
 		for colIdx, colData := range line {
 			// w tym trybie pracy każda sekcja ma inną ilość kolumn więc jeśli dana sekcja
@@ -50,10 +57,7 @@ func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 				sekcjaParsera.SetData(headers[colIdx], strings.TrimSpace(colData))
 			}
 		}
+		sekcjaParsera.finish(sekcjaParsera)
 	}
 	return nil
-}
-
-func (p *Parser) finish() {
-	sekcjaParsera.finish(sekcjaParsera)
 }
