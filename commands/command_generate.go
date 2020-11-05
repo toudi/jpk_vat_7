@@ -18,6 +18,7 @@ type generateArgsType struct {
 	EncodingConversionFile string
 	UseCurrentDir          bool
 	GenerateMetadata       bool
+	CSVDelimiter           string
 }
 
 type generateCommand struct {
@@ -37,6 +38,7 @@ func init() {
 		},
 	}
 
+	GenerateCmd.FlagSet.StringVar(&generateArgs.CSVDelimiter, "d", ",", "separator pól CSV")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.Verbose, "v", false, "tryb verbose (zwiększa poziom komunikatów wyjściowych)")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.TestGateway, "t", false, "użycie bramki testowej do generowania metadanych")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.GenerateAuthData, "a", false, "wygeneruj strukturę AuthData (alternatywa dla podpisu kwalifikowanego)")
@@ -68,6 +70,8 @@ func generateRun(c *Command) error {
 		converter.GeneratorOptions.AuthData = args.AuthData
 		converter.GeneratorOptions.UseCurrentDir = args.UseCurrentDir
 		converter.GeneratorOptions.GenerateMetadata = args.GenerateMetadata
+		converter.Delimiter = args.CSVDelimiter
+
 		if args.EncodingConversionFile != "" {
 			converter.PrepareEncodingConversionTable(args.EncodingConversionFile)
 		}

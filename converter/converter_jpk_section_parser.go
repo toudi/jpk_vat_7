@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
 // typ definiuje parser struktury zapisanej w CSV.
@@ -17,12 +16,13 @@ type Parser struct {
 	// naglowki służą do sprawdzenia czy struktura się zgadza.
 	naglowki []string
 	// sekcje definiują nam co będziemy parsować.
-	sekcje []SekcjaParsera
+	sekcje []*SekcjaParsera
+	mode   int
 }
 
-func parser(filePath string, sekcje []SekcjaParsera) error {
+func parser(filePath string, sekcje []*SekcjaParsera, delimiter string) error {
 	var err error
-	p, err := parserInit(filePath)
+	p, err := parserInit(filePath, delimiter)
 	if err != nil {
 		return err
 	}
@@ -31,15 +31,15 @@ func parser(filePath string, sekcje []SekcjaParsera) error {
 	return p.parsuj()
 }
 
-func parserInit(filePath string) (*Parser, error) {
-	p := &Parser{}
+func parserInit(filePath string, delimiter string) (*Parser, error) {
+	p := &Parser{mode: ParserModeSingleFile}
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	p.file = file
 	reader := csv.NewReader(bufio.NewReader(p.file))
-	reader.Comma = ';'
+	reader.Comma = []rune(delimiter)[0]
 	p.csvReader = reader
 
 	return p, nil
@@ -47,10 +47,7 @@ func parserInit(filePath string) (*Parser, error) {
 
 func (p *Parser) parsuj() error {
 	var nrLinii int = -1
-	// var nrKolNaglowka int
-	var naglowek string
-	var pola map[string]string
-	var atrybuty map[string]string
+	// var err error
 
 	for {
 		line, err := p.csvReader.Read()
@@ -63,81 +60,28 @@ func (p *Parser) parsuj() error {
 
 		nrLinii++
 		if nrLinii == 0 {
-			p.naglowki = line
-			kolumnaStart := 0
-			for i, sekcja := range p.sekcje {
-				logger.Debugf("Sprawdzam sekcje: %s (od kolumny %s)\n", sekcja.nazwa, sekcja.start)
-				for nrKolumny := kolumnaStart; nrKolumny < len(line); nrKolumny++ {
-					logger.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
-					if line[nrKolumny] == sekcja.start {
-						p.sekcje[i].kolumnaStart = nrKolumny
-						p.sekcje[i].kolumnaKoniec = len(line)
-						kolumnaStart = nrKolumny
-						if i > 0 {
-							p.sekcje[i-1].kolumnaKoniec = nrKolumny
-							logger.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
-						}
-						break
-					}
-				}
+			// spróbujmy wykryć typ pliku.
+			if line[0] == "SEKCJA" {
+				logger.Debugf("Wykryto plik CSV z wieloma sekcjami w pojedynczym pliku; zmiana trybu parsera")
+				p.mode = ParserModeSingleFileWithSections
+				p.parseLineSingleFileWithSections(line)
+			}
+
+			if p.mode == ParserModeSingleFile {
+				p.parseSAFTSections(line)
 			}
 		} else {
-			// iterujemy po sekcjach i staramy sie parsować elementy.
-			for _, sekcja := range p.sekcje {
-				// należy odnaleźć kolumnę ze startem sekcji.
-				startSekcji := sekcja.kolumnaStart
-
-				logger.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
-				if line[startSekcji] == "" {
-					// pusta sekcja, lecimy dalej.
-					continue
+			if p.mode == ParserModeSingleFileWithSections {
+				if err = p.parseLineSingleFileWithSections(line); err != nil {
+					return fmt.Errorf("Błąd podczas parsowania pliku: %v", err)
 				}
-
-				// znaleźliśmy sekcję. zaczynamy parsowanie.
-				logger.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
-				pola = sekcja.pola
-				atrybuty = sekcja.atrybuty
-
-				if pola == nil {
-					logger.Debugf("pusta mapa, tworze nową")
-					pola = make(map[string]string)
-					atrybuty = make(map[string]string)
-				}
-
-				for kol := startSekcji; kol < len(p.naglowki); kol++ {
-					if sekcja.kolejnoscPol == nil {
-						sekcja.kolejnoscPol = make([]string, 0)
-					}
-					if kol >= sekcja.kolumnaKoniec || p.naglowki[kol] == "stop" {
-						logger.Debugf("koniec sekcji")
-						break
-					}
-					naglowek = p.naglowki[kol]
-					sekcja.kolejnoscPol = append(sekcja.kolejnoscPol, naglowek)
-					if line[kol] != "" {
-						line[kol] = strings.ReplaceAll(line[kol], "&", "&amp;")
-						if encodingConversion != nil {
-							line[kol] = convertEncoding(line[kol])
-						}
-						logger.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
-						if strings.Contains(naglowek, ".") {
-							// to jest atrybut.
-							atrybuty[naglowek] = line[kol]
-						} else {
-							pola[naglowek] = strings.TrimRight(line[kol], " ")
-						}
-					} else {
-						logger.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
-					}
-				}
-
-				sekcja.pola = pola
-				sekcja.atrybuty = atrybuty
-
-				logger.Debugf("===> KONIEC SEKCJI <=== ")
-				sekcja.finish(sekcja)
+			} else {
+				p.parseLineSingleFile(line)
 			}
 		}
+	}
+	if p.mode == ParserModeSingleFileWithSections {
+		p.finish()
 	}
 	return nil
 }
@@ -146,8 +90,8 @@ func (p *Parser) Close() {
 	p.file.Close()
 }
 
-func (j *JPK) parsujCSV(fileName string) error {
-	return parser(fileName, []SekcjaParsera{
+func (j *JPK) parsujCSV(fileName string, delimiter string) error {
+	return parser(fileName, []*SekcjaParsera{
 		sekcjaNaglowek,
 		sekcjaDeklaracjaNaglowek,
 		sekcjaPodmiot,
@@ -157,5 +101,5 @@ func (j *JPK) parsujCSV(fileName string) error {
 		sekcjaZakupCtrl,
 		sekcjaDeklaracjaPozycje,
 		sekcjaDeklaracja,
-	})
+	}, delimiter)
 }

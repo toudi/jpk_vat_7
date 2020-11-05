@@ -13,6 +13,7 @@ var availableCommands = []commands.Command{
 	commands.GenerateCmd.Command,
 	commands.UploadCmd.Command,
 	commands.StatusCmd.Command,
+	commands.UpoCommand.Command,
 }
 
 func usage() {

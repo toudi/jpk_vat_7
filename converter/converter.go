@@ -10,9 +10,10 @@ import (
 )
 
 type Converter struct {
-	source   string
-	SAFTFile string
-	cipher   *common.Cipher
+	source    string
+	SAFTFile  string
+	cipher    *common.Cipher
+	Delimiter string
 
 	GatewayOptions struct {
 		UseTestGateway bool
