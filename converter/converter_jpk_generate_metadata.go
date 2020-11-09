@@ -16,7 +16,7 @@ var jpkAuthDataTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 	<podp:ImiePierwsze>{{ .ImiePierwsze }}</podp:ImiePierwsze>
 	<podp:Nazwisko>{{ .Nazwisko }}</podp:Nazwisko>
 	<podp:DataUrodzenia>{{ .DataUrodzenia }}</podp:DataUrodzenia>
-	<podp:Kwota>{{ .Income }}</podp:Kwota>
+	<podp:Kwota>{{ printf "%.2f" .Income }}</podp:Kwota>
 </podp:DaneAutoryzujace>`
 
 var jpkMetaXmlTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
