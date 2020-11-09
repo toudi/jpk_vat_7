@@ -1,7 +1,5 @@
 package converter
 
-import "strings"
-
 func (p *Parser) parseSAFTSections(line []string) {
 	p.naglowki = line
 	kolumnaStart := 0
@@ -12,15 +10,17 @@ func (p *Parser) parseSAFTSections(line []string) {
 			if line[nrKolumny] == sekcja.start {
 				p.sekcje[i].kolumnaStart = nrKolumny
 				p.sekcje[i].kolumnaKoniec = len(line)
-				//kolumnaStart = nrKolumny
+				kolumnaStart = nrKolumny
 				if i > 0 {
 					p.sekcje[i-1].kolumnaKoniec = nrKolumny
+					p.sekcje[i-1].kolejnoscPol = line[p.sekcje[i-1].kolumnaStart:p.sekcje[i-1].kolumnaKoniec]
 					logger.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
 				}
 				break
 			}
 		}
 	}
+	p.sekcje[len(p.sekcje)-1].kolejnoscPol = line[p.sekcje[len(p.sekcje)-1].kolumnaStart:len(line)]
 }
 
 var naglowek string
@@ -41,44 +41,18 @@ func (p *Parser) parseLineSingleFile(line []string) {
 
 		// znaleźliśmy sekcję. zaczynamy parsowanie.
 		logger.Debugf("Pole startowe znalezione. Rozpoczynam parsowanie")
-		pola = sekcja.pola
-		atrybuty = sekcja.atrybuty
 
-		if pola == nil {
-			logger.Debugf("pusta mapa, tworze nową")
-			pola = make(map[string]string)
-			atrybuty = make(map[string]string)
-		}
+		sekcja.pola = make(map[string]string)
+		sekcja.atrybuty = make(map[string]string)
 
 		for kol := startSekcji; kol < len(p.naglowki); kol++ {
-			if sekcja.kolejnoscPol == nil {
-				sekcja.kolejnoscPol = make([]string, 0)
-			}
 			if kol >= sekcja.kolumnaKoniec || p.naglowki[kol] == "stop" {
 				logger.Debugf("koniec sekcji")
 				break
 			}
 			naglowek = p.naglowki[kol]
-			sekcja.kolejnoscPol = append(sekcja.kolejnoscPol, naglowek)
-			if line[kol] != "" {
-				line[kol] = strings.ReplaceAll(line[kol], "&", "&amp;")
-				if encodingConversion != nil {
-					line[kol] = convertEncoding(line[kol])
-				}
-				logger.Debugf("Znalazłem pole: %s (%s)", naglowek, line[kol])
-				if strings.Contains(naglowek, ".") {
-					// to jest atrybut.
-					atrybuty[naglowek] = line[kol]
-				} else {
-					pola[naglowek] = strings.TrimRight(line[kol], " ")
-				}
-			} else {
-				logger.Debugf("Pomijanie pola %s - pusta wartość", naglowek)
-			}
+			sekcja.SetData(p.naglowki[kol], line[kol])
 		}
-
-		sekcja.pola = pola
-		sekcja.atrybuty = atrybuty
 
 		logger.Debugf("===> KONIEC SEKCJI <=== ")
 		sekcja.finish(sekcja)
