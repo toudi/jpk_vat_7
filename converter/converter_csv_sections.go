@@ -82,10 +82,10 @@ func (j *JPK) inicjalizujSekcje() {
 		finish: func(s *SekcjaParsera) {
 			j.podmiot.typPodmiotu = s.pola["typPodmiotu"]
 			delete(s.pola, "typPodmiotu")
-			if j.podmiot.typPodmiotu == "F" {
+			if strings.ToUpper(j.podmiot.typPodmiotu) == "F" {
 				j.podmiot.osobaFizyczna.pola = s.pola
 				j.podmiot.osobaFizyczna.sekcjaParsera = s
-			} else if j.podmiot.typPodmiotu == "NF" {
+			} else if strings.ToUpper(j.podmiot.typPodmiotu) == "NF" {
 				j.podmiot.osobaNiefizyczna.pola = s.pola
 				j.podmiot.osobaNiefizyczna.sekcjaParsera = s
 			}

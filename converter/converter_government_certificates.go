@@ -75,7 +75,7 @@ func (c *Converter) downloadCertificate() error {
 func (c *Converter) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 	var err error
 	logger.Debugf("Co będzie szyfrowane: %+v", key)
-	c.downloadCertificate()
+	// c.downloadCertificate()
 	certFileBytes, err := ioutil.ReadFile(certFile)
 
 	if err != nil {

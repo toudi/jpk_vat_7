@@ -1,5 +1,9 @@
 package converter
 
+import (
+	"github.com/toudi/jpk_vat/common"
+)
+
 func (p *Parser) parseSAFTSections(line []string) {
 	p.naglowki = line
 	kolumnaStart := 0
@@ -34,7 +38,7 @@ func (p *Parser) parseLineSingleFile(line []string) {
 		startSekcji := sekcja.kolumnaStart
 
 		logger.Debugf("Próba parsowania sekcji %s (od kolumny %s/%d)", sekcja.nazwa, sekcja.start, startSekcji)
-		if line[startSekcji] == "" {
+		if common.LineIsEmpty(line[sekcja.kolumnaStart:sekcja.kolumnaKoniec]) {
 			// pusta sekcja, lecimy dalej.
 			continue
 		}

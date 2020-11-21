@@ -3,6 +3,8 @@ package converter
 import (
 	"fmt"
 	"strings"
+
+	"github.com/toudi/jpk_vat/common"
 )
 
 const (
@@ -19,14 +21,6 @@ var sekcjaParsera *SekcjaParsera
 var parserState int = StateDetectSection
 var headers []string
 
-func (p *Parser) emptyLine(line []string) bool {
-	for _, item := range line {
-		if item != "" {
-			return false
-		}
-	}
-	return true
-}
 func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 	var exists bool
 
@@ -37,7 +31,7 @@ func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 			return fmt.Errorf("Błąd: Nieznana sekcja: %s", line[1])
 		}
 		parserState = StateDetectHeaders
-	} else if p.emptyLine(line) {
+	} else if common.LineIsEmpty(line) {
 		// pusta linia, ignorujemy.
 		return nil
 	} else if parserState == StateDetectHeaders {
