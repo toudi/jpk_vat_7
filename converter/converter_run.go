@@ -29,6 +29,7 @@ func (c *Converter) Run() error {
 	jpk.podmiot.osobaFizyczna.namespace = "etd"
 	jpk.podmiot.osobaFizyczna.namespacePol = make(map[string]string)
 	jpk.podmiot.osobaFizyczna.namespacePol["Email"] = "tns"
+	jpk.podmiot.osobaFizyczna.namespacePol["Telefon"] = "tns"
 
 	if statInfo.IsDir() {
 		err = c.convertDirectory()
