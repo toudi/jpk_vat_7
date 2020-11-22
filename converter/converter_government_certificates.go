@@ -1,10 +1,8 @@
 package converter
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -22,7 +20,7 @@ const certsDir = "certyfikaty"
 var certFile string
 
 // jeśli funkcja zauważy, że plik certyfikatu istnieje to po prostu wcześniej wyjdzie.
-func (c *Converter) downloadCertificate() error {
+func (c *Converter) locateCertFile() error {
 	gateway := common.ProductionGatewayURL
 	if c.GatewayOptions.UseTestGateway {
 		gateway = common.TestGatewayURL
@@ -39,43 +37,49 @@ func (c *Converter) downloadCertificate() error {
 	logger.Infof("Plik certyfikatu: %s", certFile)
 	certFileExists := common.FileExists(certFile)
 
-	if certFileExists {
-		logger.Debugf("Plik certyfikatu znaleziony; no-op")
-		return nil
-	}
-
-	conn, err := tls.Dial("tcp", url.Host+":443", &tls.Config{})
-	if err != nil {
-		return fmt.Errorf("Nie udało się nawiązać połączenia z bramką: %v", err)
-	}
-	defer conn.Close()
-	var b bytes.Buffer
-
-	if err = pem.Encode(&b, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: conn.ConnectionState().PeerCertificates[0].Raw,
-	}); err != nil {
-		return fmt.Errorf("Nie udało się zapisać certyfikatu do bufora: %v", err)
-	}
-
 	if !certFileExists {
-		if _, err = os.Create(certFile); err != nil {
-			return fmt.Errorf("Nie udało się stworzyć pliku z certyfikatem :%v", err)
-		}
+		return fmt.Errorf("Plik certyfikatu nie istnieje; proszę pobrać go ze strony ministerstwa lub repozytorium programu: %s", certFile)
 	}
-
-	if err = ioutil.WriteFile(certFile, b.Bytes(), 0644); err != nil {
-		return fmt.Errorf("Nie udało się zapisać certyfikatu do pliku: %v", err)
-	}
-
 	return nil
+
+	/*
+		ten fragment kodu pobierał kiedyś certyfikat z domeny ale albo nie potrafię tego zrobić
+		poprawnie albo ministerstwo używa zupełnie innych certyfikatów i dlatego załącza je
+		w zip.
+
+		conn, err := tls.Dial("tcp", url.Host+":443", &tls.Config{})
+		if err != nil {
+			return fmt.Errorf("Nie udało się nawiązać połączenia z bramką: %v", err)
+		}
+		defer conn.Close()
+		var b bytes.Buffer
+
+		if err = pem.Encode(&b, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: conn.ConnectionState().PeerCertificates[0].Raw,
+		}); err != nil {
+			return fmt.Errorf("Nie udało się zapisać certyfikatu do bufora: %v", err)
+		}
+
+		if !certFileExists {
+			if _, err = os.Create(certFile); err != nil {
+				return fmt.Errorf("Nie udało się stworzyć pliku z certyfikatem :%v", err)
+			}
+		}
+
+		if err = ioutil.WriteFile(certFile, b.Bytes(), 0644); err != nil {
+			return fmt.Errorf("Nie udało się zapisać certyfikatu do pliku: %v", err)
+		}
+
+		return nil
+	*/
 }
 
 // funkcja szyfruje ciąg bajtów za pomocą klucza publicznego z certyfikatu ministerstwa
 func (c *Converter) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 	var err error
 	logger.Debugf("Co będzie szyfrowane: %+v", key)
-	// c.downloadCertificate()
+	c.locateCertFile()
 	certFileBytes, err := ioutil.ReadFile(certFile)
 
 	if err != nil {
