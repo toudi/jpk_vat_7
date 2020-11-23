@@ -42,8 +42,10 @@ func (p *Parser) parseSAFTSections(line []string) {
 		}
 	}
 
-	prevSection.kolejnoscPol = line[prevSection.kolumnaStart:len(line)]
-	logger.Debugf("Ustawiam zakres sekcji %s na %d:%d\n", prevSection.nazwa, prevSection.kolumnaStart, prevSection.kolumnaKoniec)
+	if prevSection != nil {
+		prevSection.kolejnoscPol = line[prevSection.kolumnaStart:len(line)]
+		logger.Debugf("Ustawiam zakres sekcji %s na %d:%d\n", prevSection.nazwa, prevSection.kolumnaStart, prevSection.kolumnaKoniec)
+	}
 }
 
 var naglowek string

@@ -80,6 +80,12 @@ func (p *Parser) parsuj() error {
 			}
 		}
 	}
+	// sprawdźmy czy wszystkie sekcje zostały prawidłowo rozpoznane.
+	for _, sekcja := range p.sekcje {
+		if sekcja.kolumnaKoniec == 0 {
+			return fmt.Errorf("Nie udało się odnaleźć sekcji %s w pliku. Jeśli używasz CSV jako wejścia, upewnij się, że używasz poprawnego rozgraniczenia pól - parametr -d", sekcja.nazwa)
+		}
+	}
 	return nil
 }
 
