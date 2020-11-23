@@ -6,25 +6,44 @@ import (
 
 func (p *Parser) parseSAFTSections(line []string) {
 	p.naglowki = line
-	kolumnaStart := 0
-	for i, sekcja := range p.sekcje {
-		logger.Debugf("Sprawdzam sekcje: %s (od kolumny %s)\n", sekcja.nazwa, sekcja.start)
-		for nrKolumny := kolumnaStart; nrKolumny < len(line); nrKolumny++ {
-			logger.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
+	// prevSection oznacza poprzednią sekcję parsera.
+	// chodzi o to, że sekcje mogą być ustawione w pliku w dowolnej kolejności
+	// i aby uchronić się przed błędem indeksowania line[wieksze:mniejsze] ustawiamy
+	// wskaźnik na poprzednią sekcję. tym sposobem kiedy napotkamy początek kolejnej
+	// sekcji wiemy od razu w której kolumnie jest koniec poprzednio parsowanej.
+	var prevSection *SekcjaParsera = nil
+	// kolumnaStart := 0
+	// najpierw iterujemy po kolumnach a później sprawdzamy do której sekcji można przypisać
+	// daną kolumnę.
+	for nrKolumny := 0; nrKolumny < len(line); nrKolumny++ {
+		logger.Debugf("nrKolumny; naglowek; %d, %s\n", nrKolumny, line[nrKolumny])
+		for _, sekcja := range p.sekcje {
+			// jeśli nagłówki dla sekcji zostały już sparsowane to pomijamy ją
+			// i próbujemy dopasować te które jeszcze nie zostały rozpoznane.
+			if len(sekcja.kolejnoscPol) > 0 {
+				continue
+			}
 			if line[nrKolumny] == sekcja.start {
-				p.sekcje[i].kolumnaStart = nrKolumny
-				p.sekcje[i].kolumnaKoniec = len(line)
-				kolumnaStart = nrKolumny
-				if i > 0 {
-					p.sekcje[i-1].kolumnaKoniec = nrKolumny
-					p.sekcje[i-1].kolejnoscPol = line[p.sekcje[i-1].kolumnaStart:p.sekcje[i-1].kolumnaKoniec]
-					logger.Debugf("Ustawiam koniec sekcji %s na kolumne %d\n", p.sekcje[i-1].nazwa, nrKolumny)
+				logger.Debugf("Znaleziono sekcję %s", sekcja.nazwa)
+				sekcja.kolumnaStart = nrKolumny
+				// domyślnie ustawmy koniec wiersza jako koniec sekcji - w późniejszej
+				// iteracji nadpiszemy tą wartość
+				sekcja.kolumnaKoniec = len(line)
+
+				if prevSection != nil {
+					prevSection.kolumnaKoniec = nrKolumny
+					prevSection.kolejnoscPol = line[prevSection.kolumnaStart:prevSection.kolumnaKoniec]
+					logger.Debugf("Ustawiam zakres sekcji %s na %d:%d\n", prevSection.nazwa, prevSection.kolumnaStart, prevSection.kolumnaKoniec)
 				}
+
+				prevSection = sekcja
 				break
 			}
 		}
 	}
-	p.sekcje[len(p.sekcje)-1].kolejnoscPol = line[p.sekcje[len(p.sekcje)-1].kolumnaStart:len(line)]
+
+	prevSection.kolejnoscPol = line[prevSection.kolumnaStart:len(line)]
+	logger.Debugf("Ustawiam zakres sekcji %s na %d:%d\n", prevSection.nazwa, prevSection.kolumnaStart, prevSection.kolumnaKoniec)
 }
 
 var naglowek string
