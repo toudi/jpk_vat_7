@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 
-	"github.com/toudi/jpk_vat/converter"
+	"github.com/toudi/jpk_vat_7/converter"
 )
 
 type generateArgsType struct {

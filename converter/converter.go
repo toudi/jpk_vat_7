@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 
 	log "github.com/sirupsen/logrus"
 )

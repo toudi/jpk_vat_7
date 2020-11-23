@@ -5,7 +5,7 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/toudi/jpk_vat/commands"
+	"github.com/toudi/jpk_vat_7/commands"
 )
 
 var err error

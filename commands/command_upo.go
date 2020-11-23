@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 type upoCommand struct {

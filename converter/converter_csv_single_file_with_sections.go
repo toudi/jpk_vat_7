@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 func (c *Converter) PrepareEncodingConversionTable(conversion_file string) {

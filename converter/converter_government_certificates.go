@@ -12,7 +12,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 const certsDir = "certyfikaty"

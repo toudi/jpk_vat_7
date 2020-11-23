@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 const tnsXMLNS = "http://crd.gov.pl/wzor/2020/05/08/9393/"

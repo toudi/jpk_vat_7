@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 
-	"github.com/toudi/jpk_vat/uploader"
+	"github.com/toudi/jpk_vat_7/uploader"
 
 	log "github.com/sirupsen/logrus"
 )

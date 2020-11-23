@@ -1,7 +1,7 @@
 package converter
 
 import (
-	"github.com/toudi/jpk_vat/common"
+	"github.com/toudi/jpk_vat_7/common"
 )
 
 func (p *Parser) parseSAFTSections(line []string) {
