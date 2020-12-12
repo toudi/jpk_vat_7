@@ -38,6 +38,7 @@ func (p *Parser) parseLineSingleFileWithSections(line []string) error {
 		// parsujemy nagłówki
 		headers = line
 		sekcjaParsera.SetHeaders(line)
+		sekcjaParsera.kolumnaKoniec = len(line)
 		parserState = StateParseData
 	} else if parserState == StateParseData {
 		sekcjaParsera.pola = make(map[string]string)
