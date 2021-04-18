@@ -94,7 +94,6 @@ type SAFTMetadataTemplateVars struct {
 }
 
 type metadataGeneratorStateType struct {
-	IV             []byte
 	UseTestGateway bool
 	SaftFilePath   string
 	AuthData       common.AuthData
@@ -127,8 +126,8 @@ func MetadataGeneratorInit() (*MetadataGenerator, error) {
 		return nil, fmt.Errorf("nie udało się zainicjować szyfru AES: %v", err)
 	}
 
-	generator.state.IV = make([]byte, aes.BlockSize)
-	copy(generator.state.IV, generator.cipher.IV)
+	generator.state.TemplateVars.IV = make([]byte, aes.BlockSize)
+	copy(generator.state.TemplateVars.IV, generator.cipher.IV)
 
 	logger.Debugf("Klucz szyfrujący: %v", generator.cipher.Key)
 
@@ -146,7 +145,7 @@ func (g *MetadataGenerator) GenerateMetadata(srcFile string) error {
 	populateFileMetadata(srcFile, &g.state.TemplateVars.SourceMetadata)
 
 	// najpierw należy spakować plik wejściowy
-	compressedSAFTFile, err := compressSAFTFile(g.state.SaftFilePath)
+	compressedSAFTFile, err := compressSAFTFile(srcFile)
 	if err != nil {
 		return fmt.Errorf("nie udało się skompresować pliku JPK: %v", err)
 	}
