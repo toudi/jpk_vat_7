@@ -11,6 +11,7 @@ import (
 var err error
 var availableCommands = []commands.Command{
 	commands.GenerateCmd.Command,
+	commands.MetadataCmd.Command,
 	commands.UploadCmd.Command,
 	commands.StatusCmd.Command,
 	commands.UpoCommand.Command,

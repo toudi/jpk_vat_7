@@ -6,28 +6,34 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 )
 
-func (c *Converter) compressSAFTFile() error {
+func compressedSAFTFileName(saftFilePath string) string {
+	return strings.TrimSuffix(saftFilePath, ".xml") + ".zip"
+}
+
+func compressSAFTFile(saftFilePath string) (string, error) {
+	var destFileName = compressedSAFTFileName(saftFilePath)
 	logger.Debugf("Kompresuję źródłowy plik JPK")
 	var err error
 
-	zipFile, err := os.Create(c.compressedSAFTFile())
+	zipFile, err := os.Create(destFileName)
 	if err != nil {
-		return fmt.Errorf("Nie udało się otworzyć pliku archiwum: %v", err)
+		return "", fmt.Errorf("Nie udało się otworzyć pliku archiwum: %v", err)
 	}
 	defer zipFile.Close()
 
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	if err = addFileToZip(zipWriter, c.SAFTFile); err != nil {
-		return fmt.Errorf("Nie udało się dodać pliku JPK do archiwum")
+	if err = addFileToZip(zipWriter, saftFilePath); err != nil {
+		return "", fmt.Errorf("Nie udało się dodać pliku JPK do archiwum")
 	}
 
-	logger.Debugf("Pomyślnie skompresowano plik JPK: %s => %s", c.SAFTFileName(), c.compressedSAFTFile())
+	logger.Debugf("Pomyślnie skompresowano plik JPK: %s => %s", saftFilePath, destFileName)
 
-	return nil
+	return zipFile.Name(), nil
 
 }
 

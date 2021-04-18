@@ -17,30 +17,28 @@ import (
 
 const certsDir = "certyfikaty"
 
-var certFile string
-
 // jeśli funkcja zauważy, że plik certyfikatu istnieje to po prostu wcześniej wyjdzie.
-func (c *Converter) locateCertFile() error {
+func (g *MetadataGenerator) locateCertFile() (string, error) {
 	gateway := common.ProductionGatewayURL
-	if c.GatewayOptions.UseTestGateway {
+	if g.state.UseTestGateway {
 		gateway = common.TestGatewayURL
 	}
 	url, _ := url.Parse(gateway)
 
 	if !common.FileExists(certsDir) {
 		if err = os.Mkdir(certsDir, 0775); err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	certFile = path.Join(certsDir, url.Host) + ".crt"
-	logger.Infof("Plik certyfikatu: %s", certFile)
-	certFileExists := common.FileExists(certFile)
+	_certFile := path.Join(certsDir, url.Host) + ".crt"
+	logger.Infof("Plik certyfikatu: %s", _certFile)
+	certFileExists := common.FileExists(_certFile)
 
 	if !certFileExists {
-		return fmt.Errorf("Plik certyfikatu nie istnieje; proszę pobrać go ze strony ministerstwa lub repozytorium programu: %s", certFile)
+		return "", fmt.Errorf("Plik certyfikatu nie istnieje; proszę pobrać go ze strony ministerstwa lub repozytorium programu: %s", _certFile)
 	}
-	return nil
+	return _certFile, nil
 
 	/*
 		ten fragment kodu pobierał kiedyś certyfikat z domeny ale albo nie potrafię tego zrobić
@@ -76,10 +74,12 @@ func (c *Converter) locateCertFile() error {
 }
 
 // funkcja szyfruje ciąg bajtów za pomocą klucza publicznego z certyfikatu ministerstwa
-func (c *Converter) encryptKeyWithCertificate(key []byte) ([]byte, error) {
+func (g *MetadataGenerator) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 	var err error
+	var certFile string
+
 	logger.Debugf("Co będzie szyfrowane: %+v", key)
-	c.locateCertFile()
+	certFile, err = g.locateCertFile()
 	certFileBytes, err := ioutil.ReadFile(certFile)
 
 	if err != nil {

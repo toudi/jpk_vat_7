@@ -2,62 +2,53 @@ package converter
 
 import (
 	"bytes"
-	"crypto/aes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
-
-	"github.com/toudi/jpk_vat_7/common"
 )
 
-func (c *Converter) encryptSAFTFile() error {
-	logger.Debugf("Szyfruję plik %s", path.Base(c.compressedSAFTFile()))
+func encryptedArchiveFileName(srcFile string) string {
+	return srcFile + ".aes"
+}
+
+func (g *MetadataGenerator) encryptSAFTFile(srcFile string) error {
 	var err error
-
-	logger.Debugf("Generuję klucz do szyfrowania pliku %s\n", c.compressedSAFTFile())
-	c.cipher, err = common.CipherInit(32)
-	if err != nil {
-		return fmt.Errorf("Nie udało się zainicjować szyfru AES: %v", err)
-	}
-
-	metadataTemplateVars.IV = make([]byte, aes.BlockSize)
-	copy(metadataTemplateVars.IV, c.cipher.IV)
-
-	logger.Debugf("Klucz szyfrujący: %v", c.cipher.Key)
+	logger.Debugf("Szyfruję plik %s", path.Base(srcFile))
+	logger.Debugf("Klucz szyfrujący: %v", g.cipher.Key)
 
 	// odczytanie pliku .zip
-	archiveFileBytes, err := ioutil.ReadFile(c.compressedSAFTFile())
+	srcFileBytes, err := ioutil.ReadFile(srcFile)
 	if err != nil {
 		return fmt.Errorf("Nie udało się odczytać pliku archiwum: %v", err)
 	}
-	encryptedArchiveFileBytes := c.cipher.Encrypt(archiveFileBytes, true)
+	encryptedBytes := g.cipher.Encrypt(srcFileBytes, true)
 	if err != nil {
 		return fmt.Errorf("Nie udało się zaszyfrować pliku archiwum: %v", err)
 	}
 
-	logger.Debugf("wektor inicjalizujący (IV): %v", c.cipher.IV)
+	logger.Debugf("wektor inicjalizujący (IV): %v", g.cipher.IV)
 
-	encryptedFile, err := os.Create(c.encryptedArchiveFile())
+	dstFile, err := os.Create(encryptedArchiveFileName(srcFile))
 	if err != nil {
-		return fmt.Errorf("Nie udało się stworzyć zaszyfrowanego pliku")
+		return fmt.Errorf("Nie udało się stworzyć zaszyfrowanego pliku: %v", err)
 	}
-	_, err = io.Copy(encryptedFile, bytes.NewReader(encryptedArchiveFileBytes))
+	_, err = io.Copy(dstFile, bytes.NewReader(encryptedBytes))
 	if err != nil {
-		return fmt.Errorf("Nie udało się zapisać zaszyfrowanego pliku")
+		return fmt.Errorf("Nie udało się zapisać zaszyfrowanego pliku: %v", err)
 	}
 
-	logger.Debugf("Pomyślnie zaszyfrnowano: %s => %s", path.Base(c.compressedSAFTFile()), path.Base(c.encryptedArchiveFile()))
+	logger.Debugf("Pomyślnie zaszyfrowano: %s => %s", path.Base(srcFile), path.Base(dstFile.Name()))
 
 	// zaszyfrowanie klucza kluczem publicznym z certyfikatu ministerstwa
-	encryptedKey, err := c.encryptKeyWithCertificate(c.cipher.Key)
+	encryptedKey, err := g.encryptKeyWithCertificate(g.cipher.Key)
 	if err != nil {
 		return fmt.Errorf("Nie udało się zaszyfrować klucza certyfikatem ministerstwa: %v", err)
 	}
-	metadataTemplateVars.EncryptionKey = make([]byte, len(encryptedKey))
-	copy(metadataTemplateVars.EncryptionKey, encryptedKey)
-	logger.Debugf("dane szablonu: %+v", metadataTemplateVars)
+	g.state.TemplateVars.EncryptionKey = make([]byte, len(encryptedKey))
+	copy(g.state.TemplateVars.EncryptionKey, encryptedKey)
+	logger.Debugf("dane szablonu: %+v", g.state.TemplateVars)
 	return nil
 
 }
