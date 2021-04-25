@@ -1,4 +1,4 @@
-package converter
+package saft
 
 import (
 	"archive/zip"
@@ -7,15 +7,17 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func compressedSAFTFileName(saftFilePath string) string {
 	return strings.TrimSuffix(saftFilePath, ".xml") + ".zip"
 }
 
-func compressSAFTFile(saftFilePath string) (string, error) {
+func compressSAFTXml(saftFilePath string) (string, error) {
 	var destFileName = compressedSAFTFileName(saftFilePath)
-	logger.Debugf("Kompresuję źródłowy plik JPK")
+	log.Debugf("Kompresuję źródłowy plik JPK")
 	var err error
 
 	zipFile, err := os.Create(destFileName)
@@ -31,7 +33,7 @@ func compressSAFTFile(saftFilePath string) (string, error) {
 		return "", fmt.Errorf("Nie udało się dodać pliku JPK do archiwum")
 	}
 
-	logger.Debugf("Pomyślnie skompresowano plik JPK: %s => %s", saftFilePath, destFileName)
+	log.Debugf("Pomyślnie skompresowano plik JPK: %s => %s", saftFilePath, destFileName)
 
 	return zipFile.Name(), nil
 

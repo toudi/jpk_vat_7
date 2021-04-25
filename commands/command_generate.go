@@ -5,28 +5,20 @@ import (
 	"fmt"
 	"os"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/toudi/jpk_vat_7/common"
-
-	"github.com/toudi/jpk_vat_7/converter"
+	"github.com/toudi/jpk_vat_7/parsers"
+	"github.com/toudi/jpk_vat_7/saft"
 )
-
-type generateArgsType struct {
-	Verbose                bool
-	TestGateway            bool
-	GenerateAuthData       bool
-	AuthData               common.AuthData
-	EncodingConversionFile string
-	UseCurrentDir          bool
-	GenerateMetadata       bool
-	CSVDelimiter           string
-}
 
 type generateCommand struct {
 	Command
 }
 
 var GenerateCmd *generateCommand
-var generateArgs = &generateArgsType{}
+var generateArgs = &common.GeneratorOptions{}
+var logPath string
 
 func init() {
 	GenerateCmd = &generateCommand{
@@ -40,10 +32,10 @@ func init() {
 
 	GenerateCmd.FlagSet.StringVar(&generateArgs.CSVDelimiter, "d", ",", "separator pól CSV")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.Verbose, "v", false, "tryb verbose (zwiększa poziom komunikatów wyjściowych)")
-	GenerateCmd.FlagSet.BoolVar(&generateArgs.TestGateway, "t", false, "użycie bramki testowej do generowania metadanych")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.UseCurrentDir, "cd", false, "użycie bieżącego katalogu do wygenerowania pliku wynikowego")
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.GenerateMetadata, "m", false, "generuj plik metadanych (wymagane jeśli nie zostanie użyty klient JPK Web)")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z mapą konwersji znaków")
+	GenerateCmd.FlagSet.StringVar(&logPath, "log", "", "Plik do zapisu logów; Jeśli wartość flagi będzie pusta logi zostaną przekierowane na wyjście standardowe")
 
 	handleMetadataArgs(GenerateCmd.FlagSet)
 
@@ -55,23 +47,38 @@ func init() {
 }
 
 func generateRun(c *Command) error {
-	args := generateArgs
-
 	if len(c.FlagSet.Args()) == 0 {
 		c.FlagSet.Usage()
 	} else {
-		converter := converter.ConverterInit(c.FlagSet.Args()[0], args.Verbose)
-		converter.GatewayOptions.UseTestGateway = args.TestGateway
-		converter.GeneratorOptions.GenerateAuthData = args.GenerateAuthData
-		converter.GeneratorOptions.AuthData = args.AuthData
-		converter.GeneratorOptions.UseCurrentDir = args.UseCurrentDir
-		converter.GeneratorOptions.GenerateMetadata = args.GenerateMetadata
-		converter.Delimiter = args.CSVDelimiter
-
-		if args.EncodingConversionFile != "" {
-			converter.PrepareEncodingConversionTable(args.EncodingConversionFile)
+		if generateArgs.Verbose {
+			log.SetLevel(log.DebugLevel)
 		}
-		return converter.Run()
+		parser, err := parsers.InitParser(c.FlagSet.Arg(0), generateArgs)
+		if err != nil {
+			return fmt.Errorf("Nie udało się zainicjować parsera wejścia: %v\n", err)
+		}
+
+		saftDoc := &saft.SAFT{}
+
+		if err := parser.Parse(saftDoc); err != nil {
+			log.Errorf("błąd parsowania: %v", err)
+			return err
+		}
+
+		log.Debugf("Koniec parsowania")
+		log.Debugf("Zapis do pliku: %s", parser.SAFTFileName())
+
+		saftDoc.Save(parser.SAFTFileName())
+
+		if generateArgs.GenerateMetadata {
+			saftMeta := saft.Metadata
+			saftMeta.SaftFilePath = parser.SAFTFileName()
+
+			log.Debugf("Generowanie metadanych do podpisu")
+			if err := saftMeta.Save(); err != nil {
+				return fmt.Errorf("nie udało się wygenerować pliku metadanych: %v", err)
+			}
+		}
 	}
 	return nil
 }
