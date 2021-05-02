@@ -27,8 +27,8 @@ func handleMetadataArgs(flagSet *flag.FlagSet) {
 	flagSet.StringVar(&saft.Metadata.AuthData.ImiePierwsze, "a:fn", "", "pole ImiePierwsze dla autoryzacji")
 	flagSet.StringVar(&saft.Metadata.AuthData.Nazwisko, "a:ln", "", "pole Nazwisko dla autoryzacji")
 	flagSet.StringVar(&saft.Metadata.AuthData.DataUrodzenia, "a:bd", "", "pole DataUrodzenia dla autoryzacji. Format: YYYY-MM-DD")
-	flagSet.StringVar(&saft.Metadata.TemplateVars.Metadata.SchemaVersion, "m:sv", "", "atrybut schemaVersion w nagłowku metadanych. Jeśli nie zostanie podany, wartość zostanie wyciągnięta z pliku źródłowego")
-	flagSet.StringVar(&saft.Metadata.TemplateVars.Metadata.SystemCode, "m:sc", "", "atrybut systemCode w nagłowku metadanych. Jeśli nie zostanie podany, wartość zostanie wyciągnięta z pliku źródłowego")
+	flagSet.StringVar(&saft.Metadata.TemplateVars.Metadata.SchemaVersion, "m:sv", "1-2E", "atrybut schemaVersion w nagłowku metadanych. Jeśli nie zostanie podany, wartość zostanie wyciągnięta z pliku źródłowego")
+	flagSet.StringVar(&saft.Metadata.TemplateVars.Metadata.SystemCode, "m:sc", "JPK_V7M (1)", "atrybut systemCode w nagłowku metadanych. Jeśli nie zostanie podany, wartość zostanie wyciągnięta z pliku źródłowego")
 	flagSet.StringVar(&saft.Metadata.TemplateVars.Metadata.FormCode, "m:fc", "JPK_VAT", "wartość pola FormCode w nagłowku metadanych. Jeśli nie zostanie podana, wartość zostanie wyciągnięta z pliku źródłowego")
 }
 

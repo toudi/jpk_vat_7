@@ -19,7 +19,7 @@ var saftMetaXmlTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 			<FormCode
 				systemCode="{{.Metadata.SystemCode }}"
 				schemaVersion="{{.Metadata.SchemaVersion }}">
-				JPK_VAT
+				{{ .Metadata.FormCode }}
 			</FormCode>
 			<FileName>{{ .SourceMetadata.Filename }}</FileName>
 			<ContentLength>{{.SourceMetadata.Size }}</ContentLength>
