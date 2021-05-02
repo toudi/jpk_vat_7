@@ -97,6 +97,7 @@ func (b *BaseParser) parseSAFTSections(line []string, dst *saft.SAFT) {
 // wszystko co związane z kodowaniem itp zaimplementujemy w CSVParser
 func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 	var dataEmpty bool
+	var headerField string
 	var err error
 
 	if common.LineIsEmpty(line) {
@@ -132,9 +133,11 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 		data := make(saft.SAFTData)
 		dataEmpty = true
 		for idx := section.ColStart; idx < section.ColEnd; idx++ {
-			data[b.headerIndex[idx]] = line[idx]
+			headerField = b.headerIndex[idx]
+			data[headerField] = line[idx]
 			if line[idx] != "" {
-				line[idx] = b.convertEncoding(line[idx])
+				data[headerField] = b.convertEncoding(data[headerField])
+				data[headerField] = b.addCDataIfNecesary(data[headerField])
 				dataEmpty = false
 			}
 		}
@@ -212,4 +215,12 @@ func (b *BaseParser) prepareEncodingConversionTable() {
 	}
 
 	log.Debugf("Odczytano tablicę konwersji znaków: %v\n", b.encodingConversion)
+}
+
+func (b *BaseParser) addCDataIfNecesary(value string) string {
+	if strings.Contains(value, "&") {
+		return fmt.Sprintf("<![CDATA[%s]]>", value)
+	}
+
+	return value
 }
