@@ -16,6 +16,12 @@ import (
 
 const SectionHeader = "SEKCJA"
 
+type SAFTSection struct {
+	Id       string
+	ColStart int
+	ColEnd   int
+}
+
 // typ Parser zawiera podstawową implementację parsera JPK. Chodzi o to, że
 // zarówno CSV jak i xlsx możemy traktować jako system zapisu danych tabelarycznych
 // a co za tym idzie - zawierających sekcje JPK. Tak więc znakomitą część logiki

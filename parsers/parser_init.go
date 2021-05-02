@@ -3,6 +3,7 @@ package parsers
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/toudi/jpk_vat_7/common"
 )
@@ -19,9 +20,9 @@ func InitParser(input string, options *common.GeneratorOptions) (Parser, error) 
 	if statInfo.IsDir() {
 		return &CSVDirParser{BaseParser: baseParser}, nil
 	}
-	// // nie jest to katalog więc sprawdźmy jaki to typ pliku
-	// if strings.HasSuffix(input, ".xlsx") {
-	// 	return &XLSXParser{Source: input}, nil
-	// }
+	// nie jest to katalog więc sprawdźmy jaki to typ pliku
+	if strings.HasSuffix(input, ".xlsx") {
+		return &XLSXParser{BaseParser: baseParser}, nil
+	}
 	return &CSVParser{BaseParser: baseParser}, nil
 }

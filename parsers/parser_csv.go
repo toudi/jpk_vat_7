@@ -22,12 +22,6 @@ const (
 	SingleFileWithSections = iota
 )
 
-type SAFTSection struct {
-	Id       string
-	ColStart int
-	ColEnd   int
-}
-
 type CSVParser struct {
 	BaseParser
 
