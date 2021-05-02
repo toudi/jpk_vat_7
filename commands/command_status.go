@@ -82,7 +82,7 @@ func statusRun(c *Command) error {
 			statusResponse.Code, statusResponse.Description, statusResponse.Details,
 		)
 
-		if response.StatusCode == 200 {
+		if response.StatusCode == 200 && statusResponse.Code == 200 {
 			UPOFileName := strings.Replace(refFileName, ".ref", "-upo.xml", 1)
 			if downloadPDF {
 				UPOFileName = strings.Replace(refFileName, ".ref", "-upo.pdf", 1)
