@@ -12,9 +12,9 @@ import (
 
 // eksport struktury JPK do pliku XML
 
-const tnsXMLNS = "http://crd.gov.pl/wzor/2020/05/08/9393/"
+const tnsXMLNS = "http://crd.gov.pl/wzor/2021/12/27/11148/"
 const xsiXMLNS = "http://www.w3.org/2001/XMLSchema-instance"
-const etdXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2020/03/11/eD/DefinicjeTypy/"
+const etdXMLNS = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2021/06/08/eD/DefinicjeTypy/"
 
 // kod powstal doslownie w jeden wieczor. nie mialem czasu na to aby
 // bawic sie w eleganckie wywolywanie funkcji xml.marshall
