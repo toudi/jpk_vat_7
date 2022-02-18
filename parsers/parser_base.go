@@ -134,6 +134,9 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 		dataEmpty = true
 		for idx := section.ColStart; idx < section.ColEnd; idx++ {
 			headerField = b.headerIndex[idx]
+			if headerField == "" {
+				continue
+			}
 			data[headerField] = line[idx]
 			if line[idx] != "" {
 				data[headerField] = b.convertEncoding(data[headerField])

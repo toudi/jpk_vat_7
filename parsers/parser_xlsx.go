@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/tealeg/xlsx/v3"
 	"github.com/toudi/jpk_vat_7/saft"
@@ -16,9 +17,29 @@ type XLSXParser struct {
 type XLSXRow []string
 
 func (r *XLSXRow) readCells(c *xlsx.Cell) error {
-	value, err := c.FormattedValue()
+	var value string
+	var cellName string
+	var err error
+
+	value, err = c.FormattedValue()
+
 	if err != nil {
-		return err
+		// komórki z datą są tak naprawdę liczbami - spróbujmy sprawdzić czy chodzi o
+		// źle sformatowany styl komórki:
+		if c.Type() == xlsx.CellTypeNumeric {
+			numberFormat := c.GetNumberFormat()
+			col, row := c.GetCoordinates()
+			cellName = xlsx.GetCellIDStringFromCoords(col, row)
+			if strings.Contains(numberFormat, ";@") && strings.Contains(numberFormat, "mm") {
+				fmt.Printf("uwaga - wykryto nieprawidłowy format zapisu daty: %v w komórce %s; podmiana na yyyy-mm-dd\n", numberFormat, cellName)
+				c.SetFormat("yyyy-mm-dd")
+				value, err = c.FormattedValue()
+			}
+		}
+		if err != nil {
+			col, row := c.GetCoordinates()
+			return fmt.Errorf("nie udało się odczytać zawartości z komórki (wiersz %d, kolumna %d): %v; kod formatu: %v", row+1, col, c.GetNumberFormat(), err)
+		}
 	}
 
 	*r = append(*r, value)
@@ -52,7 +73,9 @@ func (x *XLSXParser) Parse(dst *saft.SAFT) error {
 
 		row = make(XLSXRow, 0)
 
-		sheetRow.ForEachCell(row.readCells)
+		if err = sheetRow.ForEachCell(row.readCells); err != nil {
+			return fmt.Errorf("nie udało się odczytać wiersza %d: %v", rowNum, err)
+		}
 
 		if err = x.processLine(row, dst); err != nil {
 			return fmt.Errorf("nie udało się przetworzyć linii %d: %v", rowNum, err)
