@@ -86,10 +86,13 @@ func upoRun(c *Command) error {
 	if err := destUPOTEmplate.Execute(destFileNameBuffer, destFileTemplateVars); err != nil {
 		return fmt.Errorf("Nie udało się wygenerować nazwy pliku wynikowego UPO")
 	}
-	upoDownloadReq, err := http.NewRequest("GET", fmt.Sprintf(UpoDownloadURL, docRefNo), nil)
+	upoDownloadReq, err := http.NewRequest("POST", fmt.Sprintf(UpoDownloadURL, docRefNo), nil)
 	if err != nil {
 		return fmt.Errorf("Nie udało się zainicjować pobierania UPO")
 	}
+	// bez tego nagłówka serwer zamyka połączenie
+	upoDownloadReq.Header.Add("Content-Length", "0")
+
 	upoDownloadResponse, err := httpClient.Do(upoDownloadReq)
 
 	if err != nil {
