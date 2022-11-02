@@ -17,7 +17,7 @@ type statusCommand struct {
 }
 
 var StatusCmd *statusCommand
-var UpoDownloadURL = "https://e-mikrofirma.mf.gov.pl/jpk-client-2-api/api/pdf/upo/%s"
+var UpoDownloadURL = "https://e-mikrofirma.mf.gov.pl/jpk-client-2-api/api/upo/pdf/%s"
 
 type statusResponseType struct {
 	Code        int
@@ -91,12 +91,12 @@ func statusRun(c *Command) error {
 				fmt.Printf("Status przesyłania JPK poprawny; pobieram UPO\n")
 
 				if downloadPDF {
-					upoDownloadReq, err := http.NewRequest("POST", fmt.Sprintf(UpoDownloadURL, refNo), nil)
+					upoDownloadReq, err := http.NewRequest("GET", fmt.Sprintf(UpoDownloadURL, refNo), nil)
 					if err != nil {
 						return fmt.Errorf("Nie udało się zainicjować pobierania UPO")
 					}
 					// bez tego nagłówka serwer zamyka połączenie
-					upoDownloadReq.Header.Add("Content-Length", "0")
+					// upoDownloadReq.Header.Add("Content-Length", "0")
 					upoDownloadResponse, err := httpClient.Do(upoDownloadReq)
 					if err != nil {
 						return fmt.Errorf("Nie udało się pobrać UPO")

@@ -86,12 +86,14 @@ func upoRun(c *Command) error {
 	if err := destUPOTEmplate.Execute(destFileNameBuffer, destFileTemplateVars); err != nil {
 		return fmt.Errorf("Nie udało się wygenerować nazwy pliku wynikowego UPO")
 	}
-	upoDownloadReq, err := http.NewRequest("POST", fmt.Sprintf(UpoDownloadURL, docRefNo), nil)
+
+	upoDownloadReq, err := http.NewRequest("GET", fmt.Sprintf(UpoDownloadURL, docRefNo), nil)
+
 	if err != nil {
 		return fmt.Errorf("Nie udało się zainicjować pobierania UPO")
 	}
 	// bez tego nagłówka serwer zamyka połączenie
-	upoDownloadReq.Header.Add("Content-Length", "0")
+	// upoDownloadReq.Header.Add("Content-Length", "0")
 
 	upoDownloadResponse, err := httpClient.Do(upoDownloadReq)
 
@@ -100,7 +102,8 @@ func upoRun(c *Command) error {
 	}
 	defer upoDownloadResponse.Body.Close()
 	upoContent, err := ioutil.ReadAll(upoDownloadResponse.Body)
-	if err != nil {
+
+	if err != nil || upoDownloadResponse.StatusCode/100 != 2 {
 		return fmt.Errorf("Nie udało się odczytać bajtów UPO z odpowiedzi HTTP")
 	}
 	if err = ioutil.WriteFile(destFileNameBuffer.String(), upoContent, 0644); err != nil {
