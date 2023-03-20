@@ -50,6 +50,7 @@ func (r *XLSXRow) readCells(c *xlsx.Cell) error {
 func (x *XLSXParser) Parse(dst *saft.SAFT) error {
 	var err error
 	var row XLSXRow
+	var exists bool
 
 	x.workbook, err = xlsx.OpenFile(x.Source)
 
@@ -62,6 +63,16 @@ func (x *XLSXParser) Parse(dst *saft.SAFT) error {
 	}
 
 	worksheet := x.workbook.Sheets[0]
+
+	if x.Options.XLSXSpreadsheetName != "" {
+		if worksheet, exists = x.workbook.Sheet[x.Options.XLSXSpreadsheetName]; !exists {
+			var sheetNames []string
+			for key, _ := range x.workbook.Sheet {
+				sheetNames = append(sheetNames, fmt.Sprintf("\"%s\"", key))
+			}
+			return fmt.Errorf("Podano nieistniejący arkusz: %s\nDostępne arkusze: %v", x.Options.XLSXSpreadsheetName, strings.Join(sheetNames, ", "))
+		}
+	}
 
 	defer worksheet.Close()
 

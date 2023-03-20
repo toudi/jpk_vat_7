@@ -24,7 +24,7 @@ func init() {
 	GenerateCmd = &generateCommand{
 		Command: Command{
 			FlagSet:     flag.NewFlagSet("generuj", flag.ExitOnError),
-			Description: "Konwertuje plik CSV (lub katalog z plikami CSV) do pliku JPK",
+			Description: "Konwertuje plik CSV lub XLSX (lub katalog z plikami CSV) do pliku JPK",
 			Run:         generateRun,
 			Args:        generateArgs,
 		},
@@ -36,6 +36,7 @@ func init() {
 	GenerateCmd.FlagSet.BoolVar(&generateArgs.GenerateMetadata, "m", false, "generuj plik metadanych (wymagane jeśli nie zostanie użyty klient JPK Web)")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z mapą konwersji znaków")
 	GenerateCmd.FlagSet.StringVar(&logPath, "log", "", "Plik do zapisu logów; Jeśli wartość flagi będzie pusta logi zostaną przekierowane na wyjście standardowe")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.XLSXSpreadsheetName, "x:s", "", "Nazwa arkuszu w pliku XLSX do przetworzenia. Domyslnie zosatnie użyty pierwszy arkusz")
 
 	handleMetadataArgs(GenerateCmd.FlagSet)
 
