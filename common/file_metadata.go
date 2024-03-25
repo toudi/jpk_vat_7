@@ -8,8 +8,10 @@ type FileMetadata struct {
 	ContentHash []byte
 }
 
-func (m *FileMetadata) Read(srcFile string) {
+func (m *FileMetadata) Read(srcFile string, hasher Hasher) {
 	m.Filename = path.Base(srcFile)
-	m.ContentHash = Sha256File(srcFile)
+	if hasher != nil {
+		m.ContentHash = hasher(srcFile)
+	}
 	m.Size, _ = FileSize(srcFile)
 }

@@ -66,19 +66,19 @@ func (m *SAFTMetadata) Save() error {
 	copy(m.TemplateVars.IV, m.cipher.IV)
 
 	// uzupełniamy metadane pliku źródłowego
-	m.TemplateVars.SourceMetadata.Read(m.SaftFilePath)
+	m.TemplateVars.SourceMetadata.Read(m.SaftFilePath, common.Sha256File)
 	// kompresujemy plik źródłowy
 	compressedSAFTFileName, err := compressSAFTXml(m.SaftFilePath)
 	if err != nil {
 		return fmt.Errorf("nie udało się spakować pliku JPK do archiwum: %v", err)
 	}
-	m.TemplateVars.ArchiveMetadata.Read(compressedSAFTFileName)
+	m.TemplateVars.ArchiveMetadata.Read(compressedSAFTFileName, nil)
 	// szyfrujemy plik archiwum
 	encryptedArchiveFileName, err := m.encryptSAFTArchive(compressedSAFTFileName)
 	if err != nil {
 		return fmt.Errorf("nie udało się zaszyfrować pliku archiwum: %v", err)
 	}
-	m.TemplateVars.EncryptedMetadata.Read(encryptedArchiveFileName)
+	m.TemplateVars.EncryptedMetadata.Read(encryptedArchiveFileName, common.Md5File)
 
 	var funcMap = template.FuncMap{
 		"base64":   base64.StdEncoding.EncodeToString,

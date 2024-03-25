@@ -8,6 +8,8 @@ import (
 	"os"
 )
 
+type Hasher func(string) []byte
+
 func FileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
