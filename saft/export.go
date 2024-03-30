@@ -2,7 +2,6 @@ package saft
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -55,7 +54,7 @@ func (s *SAFT) Save(fileName string) error {
 		os.MkdirAll(dirName, 0775)
 	}
 
-	if err = ioutil.WriteFile(path.Join(dirName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-profilem-zaufanym"), 0644); err != nil {
+	if err = os.WriteFile(path.Join(dirName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-z-deklaracja-profilem-zaufanym"), 0644); err != nil {
 		return fmt.Errorf("nie udało się stworzyć pliku z linkiem do podpisu")
 	}
 
@@ -67,7 +66,13 @@ func (s *SAFT) Save(fileName string) error {
 	xml.Truncate(0)
 
 	fmt.Fprintf(xml, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-	fmt.Fprintf(xml, "<tns:JPK xmlns:etd=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n", etdXMLNS, tnsXMLNS, xsiXMLNS)
+	fmt.Fprintf(
+		xml,
+		"<tns:JPK xmlns:etd=\"%s\" xmlns:tns=\"%s\" xmlns:xsi=\"%s\">\n",
+		etdXMLNS,
+		tnsXMLNS,
+		xsiXMLNS,
+	)
 	fmt.Fprintf(xml, " <tns:Naglowek>\n")
 	s.exportSection(xml, SectionNaglowek, s.naglowek)
 	fmt.Fprintf(xml, " </tns:Naglowek>\n")
