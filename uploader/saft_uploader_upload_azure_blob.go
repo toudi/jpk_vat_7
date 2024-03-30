@@ -11,7 +11,7 @@ import (
 func (u *Uploader) uploadFileToAzureBlob(saftSessionParams *initUploadSignedResponseType) error {
 	var err error
 
-	uploadedFile := path.Join(u.workdir, saftMetadata.FileName+".aes")
+	uploadedFile := path.Join(u.workdir, saftMetadata.FileName)
 
 	fileBytes, err := ioutil.ReadFile(uploadedFile)
 	if err != nil {
@@ -19,7 +19,11 @@ func (u *Uploader) uploadFileToAzureBlob(saftSessionParams *initUploadSignedResp
 	}
 	fileBody := bytes.NewReader(fileBytes)
 
-	fileUploadRequest, err := http.NewRequest("PUT", saftSessionParams.RequestToUploadFileList[0].URL, fileBody)
+	fileUploadRequest, err := http.NewRequest(
+		"PUT",
+		saftSessionParams.RequestToUploadFileList[0].URL,
+		fileBody,
+	)
 
 	for _, header := range saftSessionParams.RequestToUploadFileList[0].HeaderList {
 		fileUploadRequest.Header.Set(header.Key, header.Value)
