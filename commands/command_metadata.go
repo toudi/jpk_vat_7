@@ -39,6 +39,7 @@ func handleMetadataArgs(flagSet *flag.FlagSet) {
 		"użyj autoryzacji za pomocą kwoty przychodu",
 	)
 	flagSet.StringVar(&saft.Metadata.AuthData.NIP, "a:n", "", "numer NIP dla autoryzacji")
+	flagSet.StringVar(&saft.Metadata.AuthData.PESEL, "a:p", "", "numer PESEL dla autoryzacji")
 	flagSet.StringVar(
 		&saft.Metadata.AuthData.ImiePierwsze,
 		"a:fn",

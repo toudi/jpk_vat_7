@@ -2,7 +2,11 @@ package saft
 
 var saftAuthDataTemplate string = `<?xml version="1.0" encoding="UTF-8"?>
 <podp:DaneAutoryzujace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:podp="http://e-deklaracje.mf.gov.pl/Repozytorium/Definicje/Podpis/">
+	{{- if .NIP }}
 	<podp:NIP>{{ .NIP }}</podp:NIP>
+	{{- else if .PESEL }}
+	<podp:PESEL>{{ .PESEL }}</podp:PESEL>
+	{{- end }}
 	<podp:ImiePierwsze>{{ .ImiePierwsze }}</podp:ImiePierwsze>
 	<podp:Nazwisko>{{ .Nazwisko }}</podp:Nazwisko>
 	<podp:DataUrodzenia>{{ .DataUrodzenia }}</podp:DataUrodzenia>
