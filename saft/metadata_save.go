@@ -1,6 +1,7 @@
 package saft
 
 import (
+	"bytes"
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/xml"
@@ -88,6 +89,24 @@ func (m *SAFTMetadata) Save() error {
 	tmpl, err := template.New("jpk-metadata").Funcs(funcMap).Parse(saftMetaXmlTemplate)
 	if err != nil {
 		return fmt.Errorf("Nie udało się sparsować szablonu dla metainformacji JPK: %v", err)
+	}
+
+	if m.AuthData.Enable {
+		// generujemy sekcję AuthData na podstawie kwoty przychodu
+		var authDataXMLBuffer bytes.Buffer
+		tmpl, err := template.New("jpk-authdata").Funcs(funcMap).Parse(saftAuthDataTemplate)
+		if err != nil {
+			return fmt.Errorf(
+				"Nie udało się sparsować szablonu dla danych autoryzujących JPK: %v",
+				err,
+			)
+		}
+		if err = tmpl.Execute(&authDataXMLBuffer, m.AuthData); err != nil {
+			return fmt.Errorf("Nie udało się wygenerować dokumentu AuthData: %v", err)
+		}
+		encryptedAuthDataXML := m.cipher.Encrypt(authDataXMLBuffer.Bytes(), true)
+		m.TemplateVars.AuthDataXML = make([]byte, len(encryptedAuthDataXML))
+		copy(m.TemplateVars.AuthDataXML, encryptedAuthDataXML)
 	}
 
 	metaFileName := saftMetadataFileName(m.SaftFilePath)

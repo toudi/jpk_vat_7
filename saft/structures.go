@@ -99,6 +99,10 @@ func (s *SAFT) AddData(section string, data SAFTData) error {
 		s.podmiot.typPodmiotu = data["typPodmiotu"]
 		delete(data, "typPodmiotu")
 		if s.podmiot.OsobaFizyczna() {
+			// sprawdzmy format daty:
+			if birthDate, exists := data["DataUrodzenia"]; exists {
+				data["DataUrodzenia"] = strings.ReplaceAll(birthDate, "\\-", "-")
+			}
 			s.podmiot.osobaFizyczna = data
 		} else {
 			s.podmiot.osobaNiefizyczna = data
