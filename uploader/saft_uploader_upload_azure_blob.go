@@ -2,18 +2,19 @@ package uploader
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"path"
+	"os"
+	"path/filepath"
 )
 
 func (u *Uploader) uploadFileToAzureBlob(saftSessionParams *initUploadSignedResponseType) error {
 	var err error
 
-	uploadedFile := path.Join(u.workdir, saftMetadata.FileName)
+	uploadedFile := filepath.Join(u.workdir, saftMetadata.FileName)
 
-	fileBytes, err := ioutil.ReadFile(uploadedFile)
+	fileBytes, err := os.ReadFile(uploadedFile)
 	if err != nil {
 		return fmt.Errorf("Nie udało się odczytac pliku do przesłania: %v", err)
 	}
@@ -25,11 +26,18 @@ func (u *Uploader) uploadFileToAzureBlob(saftSessionParams *initUploadSignedResp
 		fileBody,
 	)
 
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("błąd tworzenia requestu do azure"))
+	}
+
 	for _, header := range saftSessionParams.RequestToUploadFileList[0].HeaderList {
 		fileUploadRequest.Header.Set(header.Key, header.Value)
 	}
 
 	response, err := httpClient.Do(fileUploadRequest)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("błąd wykonania requestu PUT do azure"))
+	}
 
 	if response.StatusCode != 201 {
 		return fmt.Errorf("Błąd wysyłania pliku do Azure: %v", response.Status)
