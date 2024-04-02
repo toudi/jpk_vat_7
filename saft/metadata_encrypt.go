@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/toudi/jpk_vat_7/common"
@@ -24,7 +24,7 @@ func encryptedArchiveFileName(srcFile string) string {
 
 func (m *SAFTMetadata) encryptSAFTArchive(srcFile string) (string, error) {
 	var err error
-	log.Debugf("Szyfruję plik %s", path.Base(srcFile))
+	log.Debugf("Szyfruję plik %s", filepath.Base(srcFile))
 	log.Debugf("Klucz szyfrujący: %v", m.cipher.Key)
 
 	// odczytanie pliku .zip
@@ -48,7 +48,11 @@ func (m *SAFTMetadata) encryptSAFTArchive(srcFile string) (string, error) {
 		return "", fmt.Errorf("Nie udało się zapisać zaszyfrowanego pliku: %v", err)
 	}
 
-	log.Debugf("Pomyślnie zaszyfrowano: %s => %s", path.Base(srcFile), path.Base(dstFile.Name()))
+	log.Debugf(
+		"Pomyślnie zaszyfrowano: %s => %s",
+		filepath.Base(srcFile),
+		filepath.Base(dstFile.Name()),
+	)
 
 	// zaszyfrowanie klucza kluczem publicznym z certyfikatu ministerstwa
 	encryptedKey, err := m.encryptKeyWithCertificate(m.cipher.Key)
@@ -79,12 +83,15 @@ func (m *SAFTMetadata) locateCertFile() (string, error) {
 		}
 	}
 
-	_certFile := path.Join(certsDir, url.Host) + ".crt"
+	_certFile := filepath.Join(certsDir, url.Host) + ".crt"
 	log.Infof("Plik certyfikatu: %s", _certFile)
 	certFileExists := common.FileExists(_certFile)
 
 	if !certFileExists {
-		return "", fmt.Errorf("Plik certyfikatu nie istnieje; proszę pobrać go ze strony ministerstwa lub repozytorium programu: %s", _certFile)
+		return "", fmt.Errorf(
+			"Plik certyfikatu nie istnieje; proszę pobrać go ze strony ministerstwa lub repozytorium programu: %s",
+			_certFile,
+		)
 	}
 	return _certFile, nil
 }
@@ -113,10 +120,16 @@ func (m *SAFTMetadata) encryptKeyWithCertificate(key []byte) ([]byte, error) {
 	}
 	encryptedKeyBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, key)
 	if err != nil {
-		return nil, fmt.Errorf("Nie udało się zaszyfrować klucza szyfrującego certyfikatem RSA: %v", err)
+		return nil, fmt.Errorf(
+			"Nie udało się zaszyfrować klucza szyfrującego certyfikatem RSA: %v",
+			err,
+		)
 	}
 	log.Debugf("Klucz szyfrujący zaszyfrowany certyfikatem: %v", encryptedKeyBytes)
-	log.Debugf("Klucz szyfrujący zakodowany base64: %s", base64.StdEncoding.EncodeToString(encryptedKeyBytes))
+	log.Debugf(
+		"Klucz szyfrujący zakodowany base64: %s",
+		base64.StdEncoding.EncodeToString(encryptedKeyBytes),
+	)
 
 	return encryptedKeyBytes, nil
 

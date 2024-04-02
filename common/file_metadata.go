@@ -1,6 +1,6 @@
 package common
 
-import "path"
+import "path/filepath"
 
 type FileMetadata struct {
 	Filename    string
@@ -9,7 +9,7 @@ type FileMetadata struct {
 }
 
 func (m *FileMetadata) Read(srcFile string, hasher Hasher) {
-	m.Filename = path.Base(srcFile)
+	m.Filename = filepath.Base(srcFile)
 	if hasher != nil {
 		m.ContentHash = hasher(srcFile)
 	}

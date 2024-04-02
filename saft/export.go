@@ -1,9 +1,10 @@
 package saft
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/toudi/jpk_vat_7/common"
@@ -49,12 +50,14 @@ func (s *SAFT) Save(fileName string) error {
 	var err error
 
 	// sprawdźmy, czy katalog do zapisu istnieje.
-	dirName := path.Dir(fileName)
+	dirName := filepath.Dir(fileName)
 	if !common.FileExists(dirName) {
-		os.MkdirAll(dirName, 0775)
+		if err = os.MkdirAll(dirName, 0775); err != nil {
+			return errors.Join(err, fmt.Errorf("błąd tworzenia katalogu wyjścia"))
+		}
 	}
 
-	if err = os.WriteFile(path.Join(dirName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-z-deklaracja-profilem-zaufanym"), 0644); err != nil {
+	if err = os.WriteFile(filepath.Join(dirName, "podpisz-profilem-zaufanym.url"), []byte("[InternetShortcut]\nURL=https://www.gov.pl/web/gov/podpisz-jpkvat-z-deklaracja-profilem-zaufanym"), 0644); err != nil {
 		return fmt.Errorf("nie udało się stworzyć pliku z linkiem do podpisu")
 	}
 

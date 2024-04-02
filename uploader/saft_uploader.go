@@ -3,7 +3,7 @@ package uploader
 import (
 	"fmt"
 	"net/http"
-	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +21,7 @@ type Uploader struct {
 }
 
 func UploaderInit(sourceFile string, verbose bool) *Uploader {
-	uploader := &Uploader{sourceFile: sourceFile, workdir: path.Dir(sourceFile)}
+	uploader := &Uploader{sourceFile: sourceFile, workdir: filepath.Dir(sourceFile)}
 
 	logger = log.New()
 	if verbose {
@@ -42,7 +42,7 @@ func (u *Uploader) UploadSAFTFile() error {
 }
 
 func (u *Uploader) saftRefNoFile() string {
-	return path.Join(u.workdir, strings.TrimSuffix(path.Base(u.sourceFile), ".xml")+".ref")
+	return filepath.Join(u.workdir, strings.TrimSuffix(filepath.Base(u.sourceFile), ".xml")+".ref")
 }
 
 func (u *Uploader) gatewayURL() string {

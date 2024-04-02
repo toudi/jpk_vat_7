@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/toudi/jpk_vat_7/common"
@@ -29,7 +29,7 @@ func (d *CSVDirParser) Parse(dst *saft.SAFT) error {
 	var err error
 
 	for _, file := range []string{plikNaglowek, plikDeklaracja, plikSprzedaz, plikPodmiot, plikKupno} {
-		fullPath = path.Join(d.Source, file)
+		fullPath = filepath.Join(d.Source, file)
 		if !common.FileExists(fullPath) {
 			return fmt.Errorf("brak pliku %s", fullPath)
 		}

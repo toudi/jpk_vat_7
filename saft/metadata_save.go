@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -83,7 +83,7 @@ func (m *SAFTMetadata) Save() error {
 
 	var funcMap = template.FuncMap{
 		"base64":   base64.StdEncoding.EncodeToString,
-		"filename": path.Base,
+		"filename": filepath.Base,
 	}
 
 	tmpl, err := template.New("jpk-metadata").Funcs(funcMap).Parse(saftMetaXmlTemplate)

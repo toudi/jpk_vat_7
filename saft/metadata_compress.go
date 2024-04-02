@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -41,7 +41,7 @@ func compressSAFTXml(saftFilePath string) (string, error) {
 
 func addFileToZip(zipWriter *zip.Writer, filename string) error {
 	var err error
-	fileEntry, err := zipWriter.Create(path.Base(filename))
+	fileEntry, err := zipWriter.Create(filepath.Base(filename))
 	if err != nil {
 		return err
 	}

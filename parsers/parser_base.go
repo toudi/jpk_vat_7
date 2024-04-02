@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -155,7 +155,7 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 }
 
 func (b *BaseParser) SAFTFileName() string {
-	sourceBaseName := path.Base(b.Source)
+	sourceBaseName := filepath.Base(b.Source)
 	outputBaseName := sourceBaseName + "-jpk.xml"
 
 	// opcja generowania pliku w katalogu bieżącym
@@ -165,7 +165,12 @@ func (b *BaseParser) SAFTFileName() string {
 
 	today := time.Now()
 	// opcja generowania w katalogu z sesjami.
-	return path.Join("sesje", strconv.Itoa(today.Year()), fmt.Sprintf("%02d", today.Month()), outputBaseName)
+	return filepath.Join(
+		"sesje",
+		strconv.Itoa(today.Year()),
+		fmt.Sprintf("%02d", today.Month()),
+		outputBaseName,
+	)
 }
 
 func (b *BaseParser) convertEncoding(data string) string {
