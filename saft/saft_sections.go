@@ -1,17 +1,9 @@
 package saft
 
+import "github.com/toudi/jpk_vat_7/saft/section"
+
 // ten moduł zawiera informacje o sekcjach JPK. Sekcje pobierają informacje
 // o kolumnach na podstawie konfiguracji w pliku toml.
-
-const SectionNaglowek = "NAGLOWEK"
-const SectionPodmiot = "PODMIOT"
-const SectionDeklaracjaNaglowek = "DEKLARACJA-NAGLOWEK"
-const SectionDeklaracjaPozSzcz = "DEKLARACJA-POZ-SZCZ"
-const SectionDeklaracjaPouczenia = "DEKLARACJA-POUCZENIA"
-const SectionSprzedaz = "SPRZEDAZ"
-const SectionSprzedazCtrl = "SPRZEDAZ-CTRL"
-const SectionZakup = "ZAKUP"
-const SectionZakupCtrl = "ZAKUP-CTRL"
 
 type SAFTSection struct {
 	Id       string
@@ -19,13 +11,13 @@ type SAFTSection struct {
 }
 
 var SAFTSections = []SAFTSection{
-	{Id: SectionNaglowek, StartCol: "KodFormularza"},
-	{Id: SectionPodmiot, StartCol: "typPodmiotu"},
-	{Id: SectionDeklaracjaNaglowek, StartCol: "KodFormularzaDekl"},
-	{Id: SectionDeklaracjaPozSzcz, StartCol: "P_10"},
-	{Id: SectionDeklaracjaPouczenia, StartCol: "Pouczenia"},
-	{Id: SectionSprzedaz, StartCol: "LpSprzedazy"},
-	{Id: SectionSprzedazCtrl, StartCol: "LiczbaWierszySprzedazy"},
-	{Id: SectionZakup, StartCol: "LpZakupu"},
-	{Id: SectionZakupCtrl, StartCol: "LiczbaWierszyZakupow"},
+	{Id: section.Naglowek, StartCol: "NazwaSystemu"},
+	{Id: section.Podmiot, StartCol: "typPodmiotu"},
+	{Id: section.DeklaracjaNaglowek, StartCol: "KodFormularzaDekl"},
+	{Id: section.DeklaracjaPozSzcz, StartCol: "P_10"},
+	{Id: section.DeklaracjaPouczenia, StartCol: "Pouczenia"},
+	{Id: section.Sprzedaz, StartCol: "LpSprzedazy"},
+	{Id: section.SprzedazCtrl, StartCol: "LiczbaWierszySprzedazy"},
+	{Id: section.Zakup, StartCol: "LpZakupu"},
+	{Id: section.ZakupCtrl, StartCol: "LiczbaWierszyZakupow"},
 }

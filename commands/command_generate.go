@@ -16,9 +16,13 @@ type generateCommand struct {
 	Command
 }
 
-var GenerateCmd *generateCommand
-var generateArgs = &common.GeneratorOptions{}
-var logPath string
+var (
+	GenerateCmd   *generateCommand
+	generateArgs  = &common.GeneratorOptions{}
+	ksefRegistry  string
+	generatorName string
+	logPath       string
+)
 
 func init() {
 	GenerateCmd = &generateCommand{
@@ -37,6 +41,9 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z mapą konwersji znaków")
 	GenerateCmd.FlagSet.StringVar(&logPath, "log", "", "Plik do zapisu logów; Jeśli wartość flagi będzie pusta logi zostaną przekierowane na wyjście standardowe")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.XLSXSpreadsheetName, "x:s", "", "Nazwa arkuszu w pliku XLSX do przetworzenia. Domyslnie zosatnie użyty pierwszy arkusz")
+	GenerateCmd.FlagSet.StringVar(&ksefRegistry, "kr", "", "Ścieżka do pliku rejestru KSeF")
+	GenerateCmd.FlagSet.StringVar(&generatorName, "g", saft.GeneratorV7M_3, "nazwa generatora")
+	GenerateCmd.FlagSet.BoolVar(&generateArgs.CSVSections, "c:s", false, "użyj parsera CSV podzielonego na sekcje")
 
 	handleMetadataArgs(GenerateCmd.FlagSet)
 
@@ -60,6 +67,16 @@ func generateRun(c *Command) error {
 		}
 
 		saftDoc := &saft.SAFT{}
+
+		if generator, exists := saft.Generators[generatorName]; exists {
+			generatorInstance := generator()
+			if ksefRegistry != "" {
+				if err := generatorInstance.SetKSeFRegistryFile(ksefRegistry); err != nil {
+					return err
+				}
+			}
+			saftDoc.SetGenerator(generatorInstance)
+		}
 
 		if err := parser.Parse(saftDoc); err != nil {
 			log.Errorf("błąd parsowania: %v", err)

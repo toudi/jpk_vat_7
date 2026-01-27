@@ -6,5 +6,7 @@ type GeneratorOptions struct {
 	UseCurrentDir          bool
 	GenerateMetadata       bool
 	CSVDelimiter           string
+	CSVSections            bool
 	XLSXSpreadsheetName    string
+	KSeFRegistry           string
 }

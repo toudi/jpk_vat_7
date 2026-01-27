@@ -10,7 +10,6 @@ import (
 
 func InitParser(input string, options *common.GeneratorOptions) (Parser, error) {
 	statInfo, err := os.Stat(input)
-
 	if err != nil {
 		return nil, fmt.Errorf("nie udało się odczytać informacji o wejściu: %v", err)
 	}
@@ -23,6 +22,10 @@ func InitParser(input string, options *common.GeneratorOptions) (Parser, error) 
 	// nie jest to katalog więc sprawdźmy jaki to typ pliku
 	if strings.HasSuffix(input, ".xlsx") {
 		return &XLSXParser{BaseParser: baseParser}, nil
+	}
+
+	if options.CSVSections {
+		return &CSVWithSectionsParser{BaseParser: baseParser}, nil
 	}
 	return &CSVParser{BaseParser: baseParser}, nil
 }
