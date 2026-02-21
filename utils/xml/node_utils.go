@@ -2,6 +2,7 @@ package xml
 
 import (
 	"fmt"
+	"iter"
 	"strings"
 )
 
@@ -58,6 +59,7 @@ func (node *Node) CreateChild(path string, isArray bool) (*Node, bool) {
 func (node *Node) LocateNode(path string) (*Node, error) {
 	// fmt.Printf("locateNode %s\n", path)
 	var target *Node = node
+
 	var found bool
 
 	pathParts := strings.Split(path, ".")
@@ -82,8 +84,10 @@ func (node *Node) LocateNode(path string) (*Node, error) {
 		}
 	}
 
+	if !found {
+		return nil, fmt.Errorf("could not locate node")
+	}
 	return target, nil
-
 }
 
 func getNodeAndAttrib(name string) (string, string) {
@@ -162,4 +166,34 @@ func (node *Node) DeleteChild(name string) {
 	if node.Children != nil && index > 0 {
 		node.Children = append(node.Children[:index], node.Children[index+1:]...)
 	}
+}
+
+func (node *Node) ChildrenIterator(path string) (iter.Seq[*Node], error) {
+	// first, locate the parent node
+	pathParts := strings.Split(path, ".")
+	parentNode, err := node.LocateNode(strings.Join(pathParts[:len(pathParts)-1], "."))
+	if err != nil {
+		return nil, err
+	}
+	expectedNodeName := pathParts[len(pathParts)-1]
+
+	return func(yield func(*Node) bool) {
+		for _, child := range parentNode.Children {
+			if child.Name != expectedNodeName {
+				continue
+			}
+			if !yield(child) {
+				break
+			}
+		}
+	}, nil
+}
+
+func (node *Node) GetChildValue(childName string, defaultValue string) string {
+	child, err := node.GetChild(childName)
+	if err != nil {
+		return defaultValue
+	}
+
+	return child.Value
 }

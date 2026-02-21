@@ -46,7 +46,8 @@ type BaseParser struct {
 	// konwersja znaków w danych wejściowych - w zasadzie używana tylko przy CSV
 	// aczkolwiek gdyby kiedyś chciało mi się doimplementować obsługę plików
 	// xls (a nie xlsx) to również będzie można zastosować :-)
-	encodingConversion map[byte]string
+	encodingConversion               map[byte]string
+	ignoreEverythingUntilNextSection bool
 }
 
 // parseSAFTSections zachowuje się identycznie dla każdego sposobu zapisu
@@ -116,10 +117,19 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 				// parser o tym, że kolejna linia będzie zawierać nagłówek sekcji
 				b.headerIndex = nil
 				b.saftSections = nil
+				b.ignoreEverythingUntilNextSection = false
 				// koniec obsługi
 				return nil
 			}
 		}
+		log.Warnf("Nierozpoznana sekcja [%s]; ignoruję wiersze do napotkania kolejnej sekcji", line[1])
+		b.ignoreEverythingUntilNextSection = true
+		return nil
+	}
+
+	if b.ignoreEverythingUntilNextSection {
+		log.Warn("Ignoruję wiersz do momentu rozpoznania kolejnej znanej sekcji")
+		return nil
 	}
 	// 2/ sprawdźmy, czy mamy zdefiniowane sekcje.
 	//    Jeśli nie, to oznacza to, że bieżąca linia zawiera definicję nagłówków.
@@ -195,12 +205,10 @@ func (b *BaseParser) convertEncoding(data string) string {
 	}
 
 	return string(outputBytes)
-
 }
 
 func (b *BaseParser) prepareEncodingConversionTable() {
 	fileBytes, err := ioutil.ReadFile(b.Options.EncodingConversionFile)
-
 	if err != nil {
 		log.Errorf("Nie udało się otworzyć pliku z konwersją znaków")
 		return
