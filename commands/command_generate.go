@@ -86,7 +86,9 @@ func generateRun(c *Command) error {
 		log.Debugf("Koniec parsowania")
 		log.Debugf("Zapis do pliku: %s", parser.SAFTFileName())
 
-		saftDoc.Save(parser.SAFTFileName())
+		if err := saftDoc.Save(parser.SAFTFileName()); err != nil {
+			return err
+		}
 
 		if generateArgs.GenerateMetadata {
 			saftMeta := saft.Metadata

@@ -2,10 +2,13 @@ package v7m_3
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/toudi/jpk_vat_7/saft/section"
+	"github.com/toudi/jpk_vat_7/utils"
+	"github.com/toudi/jpk_vat_7/utils/xml"
 )
 
 var sectionToNode = map[string]string{
@@ -23,6 +26,8 @@ var typPodmiotuToNode = map[string]string{
 	"nf": "OsobaNiefizyczna",
 }
 
+var edtNamespaceFields = []string{"NIP", "ImiePierwsze", "Nazwisko", "DataUrodzenia"}
+
 var invoiceRefSourceFields = []string{
 	"NrKSeF", "OFF", "BFK", "DI",
 }
@@ -39,11 +44,25 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 		if !exists {
 			return errUnknownSubjectType
 		}
+		subjectType = strings.ToLower(subjectType)
 		delete(data, "typPodmiotu")
-		if subjectNodeName, exists := typPodmiotuToNode[strings.ToLower(subjectType)]; !exists {
+		if subjectNodeName, exists := typPodmiotuToNode[subjectType]; !exists {
 			return errUnknownSubjectType
 		} else {
 			nodeName += "." + subjectNodeName
+		}
+		if subjectType == "f" {
+			g.root.SetValue("JPK.#xmlns:edt", edtNamespace)
+			// need to rewrite the namespace in certain subelements
+			dataAdjustedNS := make(map[string]string)
+			for fieldName, value := range data {
+				if slices.Contains(edtNamespaceFields, fieldName) {
+					dataAdjustedNS["edt:"+fieldName] = value
+				} else {
+					dataAdjustedNS[fieldName] = value
+				}
+			}
+			data = dataAdjustedNS
 		}
 	}
 
@@ -78,16 +97,59 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 			if slices.Contains(invoiceRefSourceFields, field) {
 				invoiceRefSourceDefined = true
 			}
+			// check if this is a date field
+			fullNodeName := nodeName + "." + field
+			if JPK_V7M_3DateElements[fullNodeName] {
+				dateValue, err := utils.ReparseDateField(trimmedValue)
+				if err != nil {
+					return fmt.Errorf("Błąd parsowania daty: Komórka %s ma wartość %s i nie udało się jej dopasować do znanych formatów daty", field, trimmedValue)
+				} else {
+					trimmedValue = dateValue
+				}
+			}
 			if JPK_V7M_3ArrayElements[nodeName] {
 				node.SetValue(field, trimmedValue)
 			} else {
-				node.SetValue(nodeName+"."+field, trimmedValue)
+				node.SetValue(fullNodeName, trimmedValue)
 			}
 		}
 	}
 
 	if JPK_V7M_3ArrayElements[nodeName] && !invoiceRefSourceDefined {
 		node.SetValue("BFK", "1")
+	}
+
+	// let's validate the required choice1 fields (i.e. a set of fields where at least one field needs to be
+	// populated with a value of "1".)
+	if err := g.checkRequiredChoice1Fields(node, nodeName, sectionName); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sectionName string) error {
+	if fieldsToCheck, exists := requiredChoice1Fields[nodeName]; exists {
+		var populatedFields int = 0
+
+		for _, fieldName := range fieldsToCheck {
+			fullFieldName := nodeName + "." + fieldName
+			dataAtField := node.ValueOfOrDefault(fullFieldName, "")
+			if dataAtField != "" {
+				if dataAtField == "1" {
+					populatedFields += 1
+				} else {
+					return fmt.Errorf("Błąd walidacji sekcji %s; Pole %s ma wartość %s (Oczekiwana wartość to 1 lub puste pole)", sectionName, fieldName, dataAtField)
+				}
+			}
+		}
+
+		if populatedFields != 1 {
+			if populatedFields > 1 {
+				return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto ilość pól: %d", sectionName, fieldsToCheck, populatedFields)
+			}
+			return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) w sekcji musi mieć wartość równą 1", sectionName, fieldsToCheck)
+		}
 	}
 
 	return nil

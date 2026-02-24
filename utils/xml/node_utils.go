@@ -153,6 +153,15 @@ func (node *Node) ValueOf(path string) (string, error) {
 	return child.Value, nil
 }
 
+func (node *Node) ValueOfOrDefault(path string, defaultValue string) string {
+	child, err := node.LocateNode(path)
+	if err != nil {
+		return defaultValue
+	}
+
+	return child.Value
+}
+
 func (node *Node) DeleteChild(name string) {
 	var index int = -1
 

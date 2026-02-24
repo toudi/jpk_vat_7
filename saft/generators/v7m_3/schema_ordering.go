@@ -67,6 +67,13 @@ var JPK_V7M_3RequiredDefaults = map[string]string{
 }
 
 var JPK_V7M_3ArrayElements = map[string]bool{
-	"JPK.Ewidencja.ZakupWiersz":    true,
 	"JPK.Ewidencja.SprzedazWiersz": true,
+	"JPK.Ewidencja.ZakupWiersz":    true,
+}
+
+var JPK_V7M_3DateElements = map[string]bool{
+	"JPK.Ewidencja.SprzedazWiersz.DataWystawienia": true,
+	"JPK.Ewidencja.SprzedazWiersz.DataSprzedazy":   true,
+	"JPK.Ewidencja.ZakupWiersz.DataZakupu":         true,
+	"JPK.Ewidencja.ZakupWiersz.DataWplywu":         true,
 }

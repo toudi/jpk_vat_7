@@ -14,6 +14,16 @@ type v7m_3 struct {
 	ksefRegistry *ksef.KSeFRegistry
 }
 
+const (
+	edtNamespace = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/09/13/eD/DefinicjeTypy/"
+)
+
+var requiredChoice1Fields = map[string][]string{
+	"JPK.Deklaracja.PozycjeSzczegolowe": {"P_540", "P_55", "P_56", "P_560", "P_58"},
+	"JPK.Ewidencja.SprzedazWiersz":      {"BFK", "OFF", "DI"},
+	"JPK.Ewidencja.ZakupWiersz":         {"BFK", "OFF", "DI"},
+}
+
 var defaults = map[string]string{
 	"JPK.#xmlns":                                                   "http://crd.gov.pl/wzor/2025/12/19/14090/",
 	"JPK.#xmlns:xsi":                                               "http://www.w3.org/2001/XMLSchema-instance",

@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -14,7 +15,9 @@ import (
 	"github.com/toudi/jpk_vat_7/saft"
 )
 
-const SectionHeader = "SEKCJA"
+const (
+	SectionHeader = "SEKCJA"
+)
 
 type SAFTSection struct {
 	Id       string
@@ -48,6 +51,12 @@ type BaseParser struct {
 	// xls (a nie xlsx) to również będzie można zastosować :-)
 	encodingConversion               map[byte]string
 	ignoreEverythingUntilNextSection bool
+	// this dates to a **VERY** old format, designed by the ministry of finances
+	// where the section had to start from a very particular field as all of the
+	// fields were located on a single line. in the csv with sections and xlsx input
+	// this can be ignored as the fields can be randomly ordered.
+	canIgnoreSectionStartingColumn bool
+	lastDiscoveredSection          saft.SAFTSection
 }
 
 // parseSAFTSections zachowuje się identycznie dla każdego sposobu zapisu
@@ -55,6 +64,18 @@ type BaseParser struct {
 // rozpoznać w pliku wejściowym.
 func (b *BaseParser) parseSAFTSections(line []string, dst *saft.SAFT) {
 	b.headerIndex = make(map[int]string)
+
+	if b.canIgnoreSectionStartingColumn {
+		for colIdx, column := range line {
+			b.headerIndex[colIdx] = column
+		}
+		b.saftSections = append(b.saftSections, &SAFTSection{
+			Id:       b.lastDiscoveredSection.Id,
+			ColStart: 0,
+			ColEnd:   len(line),
+		})
+		return
+	}
 
 	var section *SAFTSection = nil
 	var lastSection *SAFTSection = nil
@@ -118,6 +139,7 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 				b.headerIndex = nil
 				b.saftSections = nil
 				b.ignoreEverythingUntilNextSection = false
+				b.lastDiscoveredSection = section
 				// koniec obsługi
 				return nil
 			}
@@ -156,7 +178,7 @@ func (b *BaseParser) processLine(line []string, dst *saft.SAFT) error {
 		}
 		if !dataEmpty {
 			if err = dst.AddData(section.Id, data); err != nil {
-				return fmt.Errorf("nie udało się dodać danych do sekcji %s", section.Id)
+				return errors.Join(fmt.Errorf("nie udało się dodać danych do sekcji %s", section.Id), err)
 			}
 		}
 	}

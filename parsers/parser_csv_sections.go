@@ -22,6 +22,7 @@ type CSVWithSectionsParser struct {
 }
 
 func (p *CSVWithSectionsParser) Parse(dst *saft.SAFT) error {
+	p.BaseParser.canIgnoreSectionStartingColumn = true
 	var lineBuffer bytes.Buffer
 	srcFile, err := os.Open(p.Source)
 	if err != nil {

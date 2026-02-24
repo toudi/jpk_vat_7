@@ -37,6 +37,14 @@ type controlRow struct {
 }
 
 func (g *v7m_3) Save(writer io.Writer) error {
+	if err := g.checkRequiredChoice1Fields(
+		g.root,
+		sectionToNode[section.DeklaracjaPozSzcz],
+		section.DeklaracjaPozSzcz,
+	); err != nil {
+		return err
+	}
+
 	_, err := g.root.LocateNode(sectionToNode[section.SprzedazCtrl])
 
 	var incomeCtrlRow controlRow
