@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -70,11 +71,11 @@ func (p *CSVWithSectionsParser) Parse(dst *saft.SAFT) error {
 			// by iterating over the fields rather than the headers we can parse incomplete rows
 			for fieldIdx, fieldValue := range fields {
 				if trimmedValue := strings.TrimSpace(fieldValue); trimmedValue != "" {
-					rowData[p.currentSectionHeaders[fieldIdx]] = trimmedValue
+					rowData[p.currentSectionHeaders[fieldIdx]] = p.BaseParser.addCDataIfNecesary(trimmedValue)
 				}
 			}
 			if err = dst.AddData(p.currentSection, rowData); err != nil {
-				return err
+				return errors.Join(fmt.Errorf("błąd podczas przetwarzania linii %d", lineNo+1), err)
 			}
 		}
 	}
