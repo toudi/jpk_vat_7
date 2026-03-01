@@ -131,11 +131,17 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 	return nil
 }
 
+// this code is just utterly horrible but I do not have the time to fix it.
+// the whole jpk generation code is due for a massive rewrite anyway
 func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sectionName string) error {
 	if fieldsToCheck, exists := requiredChoice1Fields[nodeName]; exists {
 		var populatedFields int = 0
 
-		for _, fieldName := range fieldsToCheck {
+		fieldPopulated := fieldsToCheck[0][0]
+		// these rules are mutually exclusive. meaning - if fieldPopulated is not empty then we would need to check that populatedFields === 0
+		fieldPopulatedValue := node.ValueOfOrDefault(nodeName+"."+fieldPopulated, "")
+
+		for _, fieldName := range fieldsToCheck[1] {
 			fullFieldName := nodeName + "." + fieldName
 			dataAtField := node.ValueOfOrDefault(fullFieldName, "")
 			if dataAtField != "" {
@@ -147,11 +153,22 @@ func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sect
 			}
 		}
 
-		if populatedFields != 1 {
-			if populatedFields > 1 {
-				return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto ilość pól: %d", sectionName, fieldsToCheck, populatedFields)
+		// now for the final check:
+		trimmedValue := strings.Trim(fieldPopulatedValue, " ")
+		if trimmedValue != "" {
+			// so if the field on the "left" side of the group is populated, we have to make sure that none of the values
+			// on the "right" side of the mutually exclusive group are populated
+			if populatedFields != 0 {
+				return fmt.Errorf("Błąd walidacji sekcji %s. Grupy pól %v oraz %v są wzajemnie rozłączne (można wypełnić wartość tylko w jednej z tych grup)", sectionName, fieldsToCheck[0], fieldsToCheck[1])
 			}
-			return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) w sekcji musi mieć wartość równą 1", sectionName, fieldsToCheck)
+		} else {
+			// the "left" side is not populated therefore let's check if any of the fields on the "right" side are populated.
+			if populatedFields != 1 {
+				if populatedFields > 1 {
+					return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto ilość pól: %d", sectionName, fieldsToCheck, populatedFields)
+				}
+				return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) lub (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[0], fieldsToCheck[1])
+			}
 		}
 	}
 

@@ -18,10 +18,12 @@ const (
 	edtNamespace = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/09/13/eD/DefinicjeTypy/"
 )
 
-var requiredChoice1Fields = map[string][]string{
-	"JPK.Deklaracja.PozycjeSzczegolowe": {"P_540", "P_55", "P_56", "P_560", "P_58"},
-	"JPK.Ewidencja.SprzedazWiersz":      {"BFK", "OFF", "DI"},
-	"JPK.Ewidencja.ZakupWiersz":         {"BFK", "OFF", "DI"},
+// these fields are mutually exclusive which is why the second argument is
+// an array of string slices
+var requiredChoice1Fields = map[string][][]string{
+	"JPK.Deklaracja.PozycjeSzczegolowe": {{"P_59"}, {"P_540", "P_55", "P_56", "P_560", "P_58"}},
+	"JPK.Ewidencja.SprzedazWiersz":      {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
+	"JPK.Ewidencja.ZakupWiersz":         {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
 }
 
 var defaults = map[string]string{
