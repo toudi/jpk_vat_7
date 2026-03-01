@@ -118,11 +118,14 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 	if JPK_V7M_3ArrayElements[nodeName] && !invoiceRefSourceDefined {
 		node.SetValue("BFK", "1")
 	}
-
-	// let's validate the required choice1 fields (i.e. a set of fields where at least one field needs to be
-	// populated with a value of "1".)
-	if err := g.checkRequiredChoice1Fields(node, nodeName, sectionName); err != nil {
-		return err
+	// if the invoice number was found then there's no point checking for the other fields to be
+	// populated as they are mutually exclusive
+	if !invoiceRefSourceDefined {
+		// let's validate the required choice1 fields (i.e. a set of fields where at least one field needs to be
+		// populated with a value of "1".)
+		if err := g.checkRequiredChoice1Fields(node, nodeName, sectionName); err != nil {
+			return err
+		}
 	}
 
 	return nil
