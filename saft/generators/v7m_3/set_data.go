@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/toudi/jpk_vat_7/saft/section"
 	"github.com/toudi/jpk_vat_7/utils"
 	"github.com/toudi/jpk_vat_7/utils/xml"
@@ -32,12 +33,32 @@ var invoiceRefSourceFields = []string{
 	"NrKSeF", "OFF", "BFK", "DI",
 }
 
+const ksefRefNoFieldName = "NrKSeF"
+
 var (
 	errUnknownSubjectType = errors.New("unknown subject type")
 	errUnknownSection     = errors.New("unknown section")
 )
 
 func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
+	if slices.Contains([]string{section.Zakup, section.Sprzedaz}, sectionName) {
+		// let's check if we can add KSeFRefNo from the registry
+		if g.ksefRegistry != nil {
+			// perfect. let's check if it is required
+			ksefRefNo := data[ksefRefNoFieldName]
+			if ksefRefNo == "" {
+				var nip *string = nil
+				invoiceRefNoFieldName := "DowodSprzedazy"
+				if sectionName == section.Zakup {
+					nip = lo.ToPtr(data["NrDostawcy"])
+					invoiceRefNoFieldName = "DowodZakupu"
+				}
+				data[ksefRefNoFieldName] = g.ksefRegistry.GetKSeFNoByRefNo(
+					nip, data[invoiceRefNoFieldName],
+				)
+			}
+		}
+	}
 	nodeName := sectionToNode[sectionName]
 	if sectionName == section.Podmiot {
 		subjectType, exists := data["typPodmiotu"]

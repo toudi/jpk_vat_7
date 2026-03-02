@@ -4,10 +4,11 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
+	"github.com/samber/lo"
 )
 
 type invoiceHash struct {
-	Nip   *string
+	Nip   string
 	RefNo string
 }
 
@@ -39,7 +40,7 @@ func LoadRegistry(filename string) (*KSeFRegistry, error) {
 		refNoIdex: make(map[invoiceHash]int),
 	}
 
-	if err = yaml.NewDecoder(registryFile).Decode(&registry); err != nil {
+	if err = yaml.NewDecoder(registryFile).Decode(registry); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +49,7 @@ func LoadRegistry(filename string) (*KSeFRegistry, error) {
 			RefNo: invoice.RefNo,
 		}
 		if invoice.Type > 0 {
-			hash.Nip = &invoice.Issuer.Nip
+			hash.Nip = invoice.Issuer.Nip
 		}
 		registry.refNoIdex[hash] = index
 	}
@@ -58,7 +59,7 @@ func LoadRegistry(filename string) (*KSeFRegistry, error) {
 
 func (r *KSeFRegistry) GetKSeFNoByRefNo(nip *string, refNo string) string {
 	if invoice, exists := r.refNoIdex[invoiceHash{
-		Nip:   nip,
+		Nip:   lo.FromPtrOr(nip, ""),
 		RefNo: refNo,
 	}]; exists {
 		return r.Invoices[invoice].KSeFRefNo
