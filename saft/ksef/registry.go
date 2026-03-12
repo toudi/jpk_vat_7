@@ -12,16 +12,10 @@ type invoiceHash struct {
 	RefNo string
 }
 
-type InvoiceIssuer struct {
-	Nip  string `yaml:"nip"`
-	Name string `yaml:"name"`
-}
-
 type invoice struct {
-	RefNo     string         `yaml:"ref-no"`
-	KSeFRefNo string         `yaml:"ksef-ref-no"`
-	Type      uint8          `yaml:"type,omitempty"`
-	Issuer    *InvoiceIssuer `yaml:"issuer,omitempty"`
+	RefNo     string `yaml:"ref-no"`
+	KSeFRefNo string `yaml:"ksef-ref-no"`
+	Issuer    string `yaml:"issuer,omitempty"`
 }
 
 type KSeFRegistry struct {
@@ -47,9 +41,7 @@ func LoadRegistry(filename string) (*KSeFRegistry, error) {
 	for index, invoice := range registry.Invoices {
 		hash := invoiceHash{
 			RefNo: invoice.RefNo,
-		}
-		if invoice.Type > 0 {
-			hash.Nip = invoice.Issuer.Nip
+			Nip:   invoice.Issuer,
 		}
 		registry.refNoIdex[hash] = index
 	}
