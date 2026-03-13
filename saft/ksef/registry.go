@@ -19,7 +19,7 @@ type invoice struct {
 }
 
 type KSeFRegistry struct {
-	Invoices []*invoice `yaml:"invoices"`
+	Invoices []*invoice
 
 	refNoIdex map[invoiceHash]int
 }
@@ -34,7 +34,7 @@ func LoadRegistry(filename string) (*KSeFRegistry, error) {
 		refNoIdex: make(map[invoiceHash]int),
 	}
 
-	if err = yaml.NewDecoder(registryFile).Decode(registry); err != nil {
+	if err = yaml.NewDecoder(registryFile).Decode(&registry.Invoices); err != nil {
 		return nil, err
 	}
 
