@@ -157,10 +157,13 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sectionName string) error {
 	if fieldsToCheck, exists := requiredChoice1Fields[nodeName]; exists {
 		var populatedFields int = 0
+		var fieldPopulatedValue string
 
-		fieldPopulated := fieldsToCheck[0][0]
-		// these rules are mutually exclusive. meaning - if fieldPopulated is not empty then we would need to check that populatedFields === 0
-		fieldPopulatedValue := node.ValueOfOrDefault(nodeName+"."+fieldPopulated, "")
+		if fieldsToCheck[0] != nil {
+			fieldPopulated := fieldsToCheck[0][0]
+			// these rules are mutually exclusive. meaning - if fieldPopulated is not empty then we would need to check that populatedFields === 0
+			fieldPopulatedValue = node.ValueOfOrDefault(nodeName+"."+fieldPopulated, "")
+		}
 
 		for _, fieldName := range fieldsToCheck[1] {
 			fullFieldName := nodeName + "." + fieldName
@@ -188,7 +191,10 @@ func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sect
 				if populatedFields > 1 {
 					return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto ilość pól: %d", sectionName, fieldsToCheck, populatedFields)
 				}
-				return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) lub (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[0], fieldsToCheck[1])
+				if fieldsToCheck[0] != nil {
+					return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) lub (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[0], fieldsToCheck[1])
+				}
+				return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[1])
 			}
 		}
 	}
