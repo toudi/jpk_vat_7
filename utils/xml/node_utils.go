@@ -27,7 +27,14 @@ func (node *Node) GetOrCreateChild(name string, isArray bool) (*Node, bool) {
 		}
 	}
 
-	newNode := &Node{Name: name}
+	var namespace string
+	if strings.Contains(name, ":") {
+		// this is a namespaced node
+		nameParts := strings.Split(name, ":")
+		namespace = nameParts[0]
+		name = nameParts[1]
+	}
+	newNode := &Node{Name: name, Namespace: namespace}
 	node.Children = append(node.Children, newNode)
 	return newNode, true
 }
