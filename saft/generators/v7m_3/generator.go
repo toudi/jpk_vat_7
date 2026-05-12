@@ -18,12 +18,28 @@ const (
 	edtNamespace = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/09/13/eD/DefinicjeTypy/"
 )
 
-// these fields are mutually exclusive which is why the second argument is
-// an array of string slices
-var requiredChoice1Fields = map[string][][]string{
-	"JPK.Deklaracja.PozycjeSzczegolowe": {nil, {"P_540", "P_55", "P_56", "P_560", "P_58"}},
-	"JPK.Ewidencja.SprzedazWiersz":      {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
-	"JPK.Ewidencja.ZakupWiersz":         {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
+// mutualExclusion: if the left-side field is populated, none of the right-side
+// fields may be populated. If the left-side field is empty, exactly one of the
+// right-side fields must be "1".
+var mutualExclusion = map[string][][]string{
+	"JPK.Ewidencja.SprzedazWiersz": {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
+	"JPK.Ewidencja.ZakupWiersz":    {{"NrKSeF"}, {"BFK", "OFF", "DI"}},
+}
+
+// conditionalChoice: if the trigger field is populated, and a positive number, exactly one of the
+// choice fields must be "1". If the trigger field is empty, none of the
+// choice fields may be populated.
+// strconv.ParseFloat is used to determine if the Trigger is active.
+type conditionalChoice struct {
+	Trigger string
+	Choices []string
+}
+
+var conditionalChoiceRules = map[string]conditionalChoice{
+	"JPK.Deklaracja.PozycjeSzczegolowe": {
+		Trigger: "P_54",
+		Choices: []string{"P_540", "P_55", "P_56", "P_560", "P_58"},
+	},
 }
 
 var defaults = map[string]string{

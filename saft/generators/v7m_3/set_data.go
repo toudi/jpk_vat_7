@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/samber/lo"
@@ -152,52 +153,77 @@ func (g *v7m_3) SetData(sectionName string, data map[string]string) error {
 	return nil
 }
 
-// this code is just utterly horrible but I do not have the time to fix it.
-// the whole jpk generation code is due for a massive rewrite anyway
 func (g *v7m_3) checkRequiredChoice1Fields(node *xml.Node, nodeName string, sectionName string) error {
-	if fieldsToCheck, exists := requiredChoice1Fields[nodeName]; exists {
-		var populatedFields int = 0
-		var fieldPopulatedValue string
+	if err := g.checkMutualExclusion(node, nodeName, sectionName); err != nil {
+		return err
+	}
+	return g.checkConditionalChoice(node, nodeName, sectionName)
+}
 
-		if fieldsToCheck[0] != nil {
-			fieldPopulated := fieldsToCheck[0][0]
-			// these rules are mutually exclusive. meaning - if fieldPopulated is not empty then we would need to check that populatedFields === 0
-			fieldPopulatedValue = node.ValueOfOrDefault(nodeName+"."+fieldPopulated, "")
-		}
-
-		for _, fieldName := range fieldsToCheck[1] {
-			fullFieldName := nodeName + "." + fieldName
-			dataAtField := node.ValueOfOrDefault(fullFieldName, "")
-			if dataAtField != "" {
-				if dataAtField == "1" {
-					populatedFields += 1
-				} else {
-					return fmt.Errorf("Błąd walidacji sekcji %s; Pole %s ma wartość %s (Oczekiwana wartość to 1 lub puste pole)", sectionName, fieldName, dataAtField)
-				}
-			}
-		}
-
-		// now for the final check:
-		trimmedValue := strings.Trim(fieldPopulatedValue, " ")
-		if trimmedValue != "" {
-			// so if the field on the "left" side of the group is populated, we have to make sure that none of the values
-			// on the "right" side of the mutually exclusive group are populated
-			if populatedFields != 0 {
-				return fmt.Errorf("Błąd walidacji sekcji %s. Grupy pól %v oraz %v są wzajemnie rozłączne (można wypełnić wartość tylko w jednej z tych grup)", sectionName, fieldsToCheck[0], fieldsToCheck[1])
-			}
-		} else {
-			// the "left" side is not populated therefore let's check if any of the fields on the "right" side are populated.
-			if populatedFields != 1 {
-				if populatedFields > 1 {
-					return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto ilość pól: %d", sectionName, fieldsToCheck, populatedFields)
-				}
-				if fieldsToCheck[0] != nil {
-					return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) lub (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[0], fieldsToCheck[1])
-				}
-				return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[1])
-			}
-		}
+func (g *v7m_3) checkMutualExclusion(node *xml.Node, nodeName, sectionName string) error {
+	fieldsToCheck, exists := mutualExclusion[nodeName]
+	if !exists {
+		return nil
 	}
 
+	fieldPopulatedValue := node.ValueOfOrDefault(nodeName+"."+fieldsToCheck[0][0], "")
+	populated, err := g.countPopulated(node, nodeName, fieldsToCheck[1])
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(fieldPopulatedValue) != "" {
+		if len(populated) > 0 {
+			return fmt.Errorf("Błąd walidacji sekcji %s. Grupy pól %v oraz %v są wzajemnie rozłączne (można wypełnić wartość tylko w jednej z tych grup). Wypełnione pola: %v", sectionName, fieldsToCheck[0], fieldsToCheck[1], populated)
+		}
+	} else if len(populated) != 1 {
+		if len(populated) > 1 {
+			return fmt.Errorf("Błąd walidacji sekcji %s. Tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto pola: %v", sectionName, fieldsToCheck[1], populated)
+		}
+		return fmt.Errorf("Błąd walidacji sekcji %s. Przynajmniej jedno z pól (%v) lub (%v) w sekcji musi być wypełnione", sectionName, fieldsToCheck[0], fieldsToCheck[1])
+	}
 	return nil
+}
+
+func (g *v7m_3) checkConditionalChoice(node *xml.Node, nodeName, sectionName string) error {
+	cc, exists := conditionalChoiceRules[nodeName]
+	if !exists {
+		return nil
+	}
+
+	triggerValue, err := strconv.ParseFloat(node.ValueOfOrDefault(nodeName+"."+cc.Trigger, "0"), 64)
+	if err != nil {
+		return err
+	}
+
+	populated, err := g.countPopulated(node, nodeName, cc.Choices)
+	if err != nil {
+		return err
+	}
+
+	if triggerValue > 0 {
+		if len(populated) != 1 {
+			if len(populated) > 1 {
+				return fmt.Errorf("Błąd walidacji sekcji %s. Pole %s jest wypełnione więc tylko jedno z pól (%v) musi mieć wartość równą 1. Wykryto pola: %v", sectionName, cc.Trigger, cc.Choices, populated)
+			}
+			return fmt.Errorf("Błąd walidacji sekcji %s. Pole %s jest wypełnione, więc przynajmniej jedno z pól (%v) musi mieć wartość 1", sectionName, cc.Trigger, cc.Choices)
+		}
+	} else if len(populated) > 0 {
+		return fmt.Errorf("Błąd walidacji sekcji %s. Pole %s jest puste, więc żadne z pól (%v) nie powinno być wypełnione. Wykryto pola: %v", sectionName, cc.Trigger, cc.Choices, populated)
+	}
+	return nil
+}
+
+func (g *v7m_3) countPopulated(node *xml.Node, nodeName string, fields []string) ([]string, error) {
+	populated := []string{}
+	for _, f := range fields {
+		v := node.ValueOfOrDefault(nodeName+"."+f, "")
+		if v != "" && v != "1" {
+			return nil, fmt.Errorf("Błąd walidacji; Pole %s ma wartość %s (Oczekiwana wartość to 1 lub puste pole)", f, v)
+		}
+		if v == "1" {
+			populated = append(populated, f)
+		}
+	}
+	return populated, nil
 }

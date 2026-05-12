@@ -79,7 +79,6 @@ func generateRun(c *Command) error {
 		}
 
 		if err := parser.Parse(saftDoc); err != nil {
-			log.Errorf("błąd parsowania: %v", err)
 			return err
 		}
 
