@@ -34,6 +34,12 @@ REQUIRED_FIELDS = {
         "TKwotowy": "0",
     },
     "date-types": ["TDataT"],
+    "ignore": [
+        "JPK.Deklaracja.PozycjeSzczegolowe.P_54",
+        # this is a TKwotaNieujemna field, however even populating it as zero
+        # makes the generated file invalid if the rest of the fields (P_55 et al)
+        # are left empty. Therefore let's not generate 0 at all here.
+    ],
 }
 
 TARGET_DIR = "../../saft/generators"
@@ -149,6 +155,8 @@ if __name__ == "__main__":
                         continue
                     if node_type not in REQUIRED_FIELDS["defaults"]:
                         print(f"unsupported type: {node_name} ({node_type})")
+                        continue
+                    if node_name in REQUIRED_FIELDS["ignore"]:
                         continue
                     ordering_file.write(
                         f'"{node_name}": "{REQUIRED_FIELDS["defaults"][node_type]}",\n'
